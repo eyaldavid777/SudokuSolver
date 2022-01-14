@@ -34,7 +34,25 @@ namespace SudokuSolver
                     cube[indexInCube] = new SolvedCell(numbersInBoard[index], index);
             }
         }
-       
-
+        public void print(int rowInCube)
+        {
+            for (int colInCube = 0; colInCube < Board.SqrtOfSizeOfBoard; colInCube++)
+            {
+                if (cube[rowInCube * Board.SqrtOfSizeOfBoard + colInCube].GetType() == typeof(SolvedCell))
+                {
+                    System.Console.Write("   {0}   ", ((SolvedCell)cube[rowInCube * Board.SqrtOfSizeOfBoard + colInCube]).number);
+                    if (colInCube == Board.SqrtOfSizeOfBoard - 1)
+                        Console.ForegroundColor = ConsoleColor.DarkBlue;
+                    System.Console.Write("|");
+                }
+                else
+                {
+                    if (colInCube == Board.SqrtOfSizeOfBoard - 1)
+                        Console.ForegroundColor = ConsoleColor.DarkBlue;
+                    System.Console.Write("       |");
+                }
+            }
+            Console.ForegroundColor = ConsoleColor.White;
+        }
     }
 }
