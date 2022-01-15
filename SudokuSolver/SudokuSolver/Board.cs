@@ -9,12 +9,14 @@ namespace SudokuSolver
     class Board : IInitializeable
     {
         public Cube[] board;
+        public static Dictionary<int, List<int>> placesOfNumbers;
         public static int sizeOfBoard;
         public static int SqrtOfSizeOfBoard;
         public Board(String numbersInBoard)
         {
             sizeOfBoard = (int)Math.Sqrt(numbersInBoard.Length);
             SqrtOfSizeOfBoard = (int)Math.Sqrt(sizeOfBoard);
+            placesOfNumbers = new Dictionary<int, List<int>>();
             board = new Cube[sizeOfBoard];
             Initialize(numbersInBoard, 0);
         }
@@ -25,7 +27,6 @@ namespace SudokuSolver
                 board[numOfCube] = new Cube(numbersInBoard, numOfCube);
             }
         }
-
         private void printALine()
         {
             System.Console.Write("       ");
@@ -99,7 +100,21 @@ namespace SudokuSolver
                 }
             }
         }
-
+        public int findMostCommonNumber()
+        {
+            int mostCommonNumber = 0;
+            int amountOfTheMostCommonNumber = 0;
+            foreach(int number in placesOfNumbers.Keys)
+            {
+                int amountOfTheNumber = placesOfNumbers[number].Count;
+                if (amountOfTheNumber > amountOfTheMostCommonNumber)
+                {
+                    amountOfTheMostCommonNumber = amountOfTheNumber;
+                    mostCommonNumber = number;
+                }
+            }
+            return mostCommonNumber;
+        }
     }
 
 }
