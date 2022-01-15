@@ -8,7 +8,7 @@ namespace SudokuSolver
 {
     class Board : IInitializeable
     {
-        public Cube[] board;
+        private static Cube[] board;
         public static Dictionary<int, List<int>> placesOfNumbers;
         public static int sizeOfBoard;
         public static int SqrtOfSizeOfBoard;
@@ -100,7 +100,7 @@ namespace SudokuSolver
                 }
             }
         }
-        public int findMostCommonNumber()
+        private int findMostCommonNumber()
         {
             int mostCommonNumber = 0;
             int amountOfTheMostCommonNumber = 0;
@@ -114,6 +114,114 @@ namespace SudokuSolver
                 }
             }
             return mostCommonNumber;
+        }
+        private static int getCubeNumberByIndex(int index)
+        {
+            return ((index / sizeOfBoard) / SqrtOfSizeOfBoard) * SqrtOfSizeOfBoard +
+                    (index % sizeOfBoard) / SqrtOfSizeOfBoard;
+        }
+
+        private int getRowOrColInCubeByIndex(int index,bool col)
+        {
+            if (col)
+                return index % sizeOfBoard % SqrtOfSizeOfBoard;
+            return index / sizeOfBoard / SqrtOfSizeOfBoard;
+        }
+        private bool isplacesOfNumberContainsACube(int cubeNumber, int number)
+        {
+            foreach (int indexInBoard in placesOfNumbers[number])
+                if (getCubeNumberByIndex(indexInBoard) == cubeNumber)
+                    return true;
+            return false;
+        }
+        private bool isCubeWorthChecking(int cubeNumber, int mostCommonNumber)
+        {
+            foreach (int indexInBoard in placesOfNumbers[mostCommonNumber])
+                if (getCubeNumberByIndex(indexInBoard) / SqrtOfSizeOfBoard == cubeNumber / SqrtOfSizeOfBoard)
+                {
+                    if (!board[cubeNumber].isRowOrColFull(false, getRowOrColInCubeByIndex(indexInBoard, false)))
+                        return true;
+                }
+                else
+                    if (getCubeNumberByIndex(indexInBoard) % SqrtOfSizeOfBoard == cubeNumber % SqrtOfSizeOfBoard)
+                        if (!board[cubeNumber].isRowOrColFull(true, getRowOrColInCubeByIndex(indexInBoard, true)))
+                            return true;
+            return false;
+        }
+        private static bool isNumberInRowOrColOfCubes(int cubeNumber,bool col,int colOrRowIndex, int addToIndexOfCube, int indexofCube, int endOfColOrRow, int number)
+        {
+            for (; indexofCube < endOfColOrRow; indexofCube += addToIndexOfCube)
+            {
+                if (indexofCube != cubeNumber)
+                {
+                    if (board[indexofCube].isNumberInRowOrCol(col, colOrRowIndex, number))
+                        return true;
+                }
+            }
+            return false;
+        }
+        public static bool isPossibleIndexToNumber(int indexOfNumberInBoard, int indexOfNumberInCube, int number)
+        {
+            int cubeNumber = getCubeNumberByIndex(indexOfNumberInBoard);
+            int rowOfCubeNumber = cubeNumber / SqrtOfSizeOfBoard;
+            int colOfCubeNumber = cubeNumber % SqrtOfSizeOfBoard;
+
+            int addToIndexOfCube = 1;
+            int indexofCube = rowOfCubeNumber * SqrtOfSizeOfBoard;
+            int endOfColOrRow = indexofCube + SqrtOfSizeOfBoard;
+            if (isNumberInRowOrColOfCubes(cubeNumber, false, indexOfNumberInCube / SqrtOfSizeOfBoard, addToIndexOfCube, indexofCube, endOfColOrRow, number))
+                return false;
+            addToIndexOfCube = SqrtOfSizeOfBoard;
+            indexofCube = colOfCubeNumber;
+            endOfColOrRow = colOfCubeNumber + SqrtOfSizeOfBoard * (SqrtOfSizeOfBoard - 1) + 1;
+            if (isNumberInRowOrColOfCubes(cubeNumber, true, indexOfNumberInCube % SqrtOfSizeOfBoard, addToIndexOfCube, indexofCube, endOfColOrRow, number))
+                return false;
+            return true;
+        }
+        private bool firstStepOfSolving()
+        {
+            int mostCommonNumber;
+            int numberOfOptionsInCube = 0;
+            while (placesOfNumbers.Count != 0)
+            {
+                mostCommonNumber = findMostCommonNumber();
+                for (int indexOfCube = 0; indexOfCube < sizeOfBoard; indexOfCube++)
+                {
+                    if (!isplacesOfNumberContainsACube(indexOfCube, mostCommonNumber))
+                    {
+                        bool checkTheOptions = isCubeWorthChecking(indexOfCube, mostCommonNumber);
+                        numberOfOptionsInCube = board[indexOfCube].fillOptionsInCube(mostCommonNumber, checkTheOptions);
+                        if (numberOfOptionsInCube == 0)
+                        {
+                            // in the cube indexOfCube you can't put mostCommonNumber
+                        }
+                        if (numberOfOptionsInCube == 1)
+                        {
+                            // put the number in it's only place and delete the options of the number
+                            // from the others
+                        }
+                        else
+                        {
+                            if (numberOfOptionsInCube <= SqrtOfSizeOfBoard)
+                            {
+                                // call to the function that works with NumbersNotInBoard
+                            }
+                        }
+                    }
+                }
+                placesOfNumbers.Remove(mostCommonNumber);
+            }
+            return true;
+        }
+        public bool Solve()
+        {
+            if (firstStepOfSolving())
+                return true;
+            else
+            {
+                // secondStepOfSolving(); ...
+            }
+            return true;
         }
     }
 

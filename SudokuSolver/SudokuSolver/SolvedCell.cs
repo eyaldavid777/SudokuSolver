@@ -10,9 +10,10 @@ namespace SudokuSolver
     {
         public int number { get; set; }
 
-        public SolvedCell(char Number, int Index) : base(Index)
+        public SolvedCell(int Number, int Index) : base(Index)
         {
             number = Number - '0';
+            // check if a number is found several times in the same row or col 
             if (Board.placesOfNumbers.ContainsKey(number))
                 Board.placesOfNumbers[number].Add(Index);
             else { 
