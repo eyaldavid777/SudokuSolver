@@ -10,15 +10,15 @@ namespace SudokuSolver
     {
         public int number { get; set; }
 
-        public SolvedCell(int Number, int Index) : base(Index)
+        public SolvedCell(Dictionary<int, List<int>> placesOfNumbers,int Number, int Index) : base(Index)
         {
             number = Number - '0';
             // check if a number is found several times in the same row or col 
-            if (Board.placesOfNumbers.ContainsKey(number))
-                Board.placesOfNumbers[number].Add(Index);
+            if (placesOfNumbers.ContainsKey(number))
+                placesOfNumbers[number].Add(Index);
             else { 
-                Board.placesOfNumbers.Add(number, new List<int>());
-                Board.placesOfNumbers[number].Add(Index);
+                placesOfNumbers.Add(number, new List<int>());
+                placesOfNumbers[number].Add(Index);
             }
         }
 

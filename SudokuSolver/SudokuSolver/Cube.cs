@@ -6,48 +6,49 @@ using System.Threading.Tasks;
 
 namespace SudokuSolver
 {
-    class Cube : IInitializeable
+    class Cube
     {
-        public ICell[] cube;
-
-        public Cube(String cubeNumbers, int numOfCube)
+        private ICell[] cube;
+        private ISudokuBoard inBoard;
+        public Cube(String cubeNumbers, int numOfCube, ISudokuBoard InBoard)
         {
-            cube = new ICell[Board.sizeOfBoard];
+            inBoard = InBoard;
+            cube = new ICell[inBoard.sizeOfBoard];
             Initialize(cubeNumbers, numOfCube);
-        }
-        public int indexInBoard(int indexInCube, int numOfCube)
-        {
-            int sqrtOfBoardSize = Board.SqrtOfSizeOfBoard;
-            return (numOfCube / sqrtOfBoardSize) * Board.sizeOfBoard * sqrtOfBoardSize
-                         + indexInCube % sqrtOfBoardSize + Board.sizeOfBoard * (indexInCube / sqrtOfBoardSize)
-                         + (numOfCube % sqrtOfBoardSize) * sqrtOfBoardSize;
-        }
-        public void Initialize(String numbersInBoard, int numOfCube)
+        } 
+        private void Initialize(String numbersInBoard, int numOfCube)
         {
             for (int indexInCube = 0; indexInCube < cube.Length; indexInCube++)
             {
                 int index = indexInBoard(indexInCube, numOfCube);
 
                 if (numbersInBoard[index] == '0')
-                    cube[indexInCube] = new UnsolvedCell(numbersInBoard[index], index);
+                    cube[indexInCube] = new UnsolvedCell(index);
                 else
-                    cube[indexInCube] = new SolvedCell(numbersInBoard[index], index);
+                    cube[indexInCube] = new SolvedCell(inBoard.placesOfNumbers,numbersInBoard[index], index);
             }
+        }
+        private int indexInBoard(int indexInCube, int numOfCube)
+        {
+            int sqrtOfBoardSize = inBoard.SqrtOfSizeOfBoard;
+            return (numOfCube / sqrtOfBoardSize) * inBoard.sizeOfBoard * sqrtOfBoardSize
+                         + indexInCube % sqrtOfBoardSize + inBoard.sizeOfBoard * (indexInCube / sqrtOfBoardSize)
+                         + (numOfCube % sqrtOfBoardSize) * sqrtOfBoardSize;
         }
         public void print(int rowInCube)
         {
-            for (int colInCube = 0; colInCube < Board.SqrtOfSizeOfBoard; colInCube++)
+            for (int colInCube = 0; colInCube < inBoard.SqrtOfSizeOfBoard; colInCube++)
             {
-                if (cube[rowInCube * Board.SqrtOfSizeOfBoard + colInCube].GetType() == typeof(SolvedCell))
+                if (cube[rowInCube * inBoard.SqrtOfSizeOfBoard + colInCube].GetType() == typeof(SolvedCell))
                 {
-                    System.Console.Write("   {0}   ", ((SolvedCell)cube[rowInCube * Board.SqrtOfSizeOfBoard + colInCube]).number);
-                    if (colInCube == Board.SqrtOfSizeOfBoard - 1)
+                    System.Console.Write("   {0}   ", ((SolvedCell)cube[rowInCube * inBoard.SqrtOfSizeOfBoard + colInCube]).number);
+                    if (colInCube == inBoard.SqrtOfSizeOfBoard - 1)
                         Console.ForegroundColor = ConsoleColor.DarkBlue;
                     System.Console.Write("|");
                 }
                 else
                 {
-                    if (colInCube == Board.SqrtOfSizeOfBoard - 1)
+                    if (colInCube == inBoard.SqrtOfSizeOfBoard - 1)
                         Console.ForegroundColor = ConsoleColor.DarkBlue;
                     System.Console.Write("       |");
                 }
@@ -61,7 +62,7 @@ namespace SudokuSolver
             {
                 if(cube[indexInCube].GetType() == typeof(UnsolvedCell))
                 {
-                    if (!checkTheOptions || Board.isPossibleIndexToNumber(cube[indexInCube].getIndex(), indexInCube, number))
+                    if (!checkTheOptions || inBoard.isPossibleIndexToNumber(cube[indexInCube].getIndex(), indexInCube, number))
                     {
                         ((UnsolvedCell)cube[indexInCube]).optionalNumbers.Add(number);
                         countOfOptionsInCube++;
@@ -70,7 +71,7 @@ namespace SudokuSolver
             }
             return countOfOptionsInCube;
         }
-        private bool isNumberInRowOrColInCube(int addToIndexInCube,int indexInCube, int endOfColOrRow, int number)
+        private bool isNumberInRowOrColInCubeFor(int addToIndexInCube,int indexInCube, int endOfColOrRow, int number)
         {
             for (; indexInCube < endOfColOrRow; indexInCube += addToIndexInCube)
             {
@@ -90,42 +91,29 @@ namespace SudokuSolver
                 }
             return false;
         }
-        public bool isNumberInRowOrCol(bool col, int colOrRowIndex, int number)
+        public bool isNumberInRowOrColInCube(bool col, int colOrRowIndex, int number)
         {
-            int addToIndexInCube = 1;
-            int indexInCube = colOrRowIndex * Board.SqrtOfSizeOfBoard;
-            int endOfColOrRow = indexInCube + Board.SqrtOfSizeOfBoard;
-            Dictionary<int, List<int>> numbersInRowsOrCols = NumbersNotInBoard.numbersInRows;
-            if (col) {
+            int[] forParams = StaticMethods.forParameters(colOrRowIndex, col, inBoard.SqrtOfSizeOfBoard);
+            Dictionary<int, List<int>> numbersInRowsOrCols;
+            if (col)
                 numbersInRowsOrCols = NumbersNotInBoard.numbersInCols;
-               addToIndexInCube = Board.SqrtOfSizeOfBoard;
-                indexInCube = colOrRowIndex;
-                endOfColOrRow = colOrRowIndex + Board.SqrtOfSizeOfBoard * (Board.SqrtOfSizeOfBoard - 1) +1;
-            }
-            if (isNumberInRowOrColInCube(addToIndexInCube, indexInCube, endOfColOrRow, number))
+            else
+                numbersInRowsOrCols = NumbersNotInBoard.numbersInRows;
+            if (isNumberInRowOrColInCubeFor(forParams[0], forParams[1], forParams[2], number))
                 return true;
             else
                 return isNumberInRowOrColInNumbersNotInBoard(numbersInRowsOrCols, colOrRowIndex, number);
         }
         public bool isRowOrColFull(bool col, int colOrRowIndex)
         {
-            int addToIndexInCube = 1;
-            int indexInCube = colOrRowIndex * Board.SqrtOfSizeOfBoard;
-            int endOfColOrRow = indexInCube + Board.SqrtOfSizeOfBoard;
-            if (col)
+            int[] forParams = StaticMethods.forParameters(colOrRowIndex, col, inBoard.SqrtOfSizeOfBoard);
+            for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
             {
-                addToIndexInCube = Board.SqrtOfSizeOfBoard;
-                indexInCube = colOrRowIndex;
-                endOfColOrRow = colOrRowIndex + Board.SqrtOfSizeOfBoard * (Board.SqrtOfSizeOfBoard - 1) + 1;
-            }
-            for (; indexInCube < endOfColOrRow; indexInCube += addToIndexInCube)
-            {
-                if (cube[indexInCube].GetType() == typeof(UnsolvedCell))
+                if (cube[forParams[1]].GetType() == typeof(UnsolvedCell))
                     return false;
                     
             }
             return true;
         }
-
     }
 }

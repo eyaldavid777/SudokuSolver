@@ -10,7 +10,7 @@ namespace SudokuSolver
     {
         static void Main(string[] args)
         {
-             Board b = new Board("0140020000000310");
+            ISudokuBoard b = new Board("0140020000000310");
              b.print();
 
             b.Solve();
@@ -19,9 +19,8 @@ namespace SudokuSolver
 
              Console.WriteLine();
 
-             Board a = new Board("014002000000031000000000000000000008000500000000000000040000000000000000000000001");
+            ISudokuBoard a = new Board("014002000000031000000000000000000008000500000000000000040000000000000000000000001");
              a.print();
-
 
         }
     }

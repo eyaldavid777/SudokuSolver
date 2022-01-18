@@ -6,12 +6,10 @@ using System.Threading.Tasks;
 
 namespace SudokuSolver
 {
-    class Board : IInitializeable
+    class Board : ISudokuBoard
     {
-        private static Cube[] board;
-        public static Dictionary<int, List<int>> placesOfNumbers;
-        public static int sizeOfBoard;
-        public static int SqrtOfSizeOfBoard;
+        private Cube[] board;
+
         public Board(String numbersInBoard)
         {
             sizeOfBoard = (int)Math.Sqrt(numbersInBoard.Length);
@@ -20,11 +18,14 @@ namespace SudokuSolver
             board = new Cube[sizeOfBoard];
             Initialize(numbersInBoard, 0);
         }
-        public void Initialize(String numbersInBoard, int index)
+        public Dictionary<int, List<int>> placesOfNumbers { get; set; }
+        public int sizeOfBoard { get; }
+        public int SqrtOfSizeOfBoard { get; }
+        private void Initialize(String numbersInBoard, int index)
         {
             for (int numOfCube = 0; numOfCube < board.Length; numOfCube++)
             {
-                board[numOfCube] = new Cube(numbersInBoard, numOfCube);
+                board[numOfCube] = new Cube(numbersInBoard, numOfCube, this);
             }
         }
         private void printALine()
@@ -115,12 +116,11 @@ namespace SudokuSolver
             }
             return mostCommonNumber;
         }
-        private static int getCubeNumberByIndex(int index)
+        private int getCubeNumberByIndex(int index)
         {
             return ((index / sizeOfBoard) / SqrtOfSizeOfBoard) * SqrtOfSizeOfBoard +
                     (index % sizeOfBoard) / SqrtOfSizeOfBoard;
         }
-
         private int getRowOrColInCubeByIndex(int index,bool col)
         {
             if (col)
@@ -148,33 +148,31 @@ namespace SudokuSolver
                             return true;
             return false;
         }
-        private static bool isNumberInRowOrColOfCubes(int cubeNumber,bool col,int colOrRowIndex, int addToIndexOfCube, int indexofCube, int endOfColOrRow, int number)
+        private bool isNumberInRowOrColOfCubes(int cubeNumber,bool col,int colOrRowIndex, int addToIndexOfCube, int indexofCube, int endOfColOrRow, int number)
         {
             for (; indexofCube < endOfColOrRow; indexofCube += addToIndexOfCube)
             {
                 if (indexofCube != cubeNumber)
                 {
-                    if (board[indexofCube].isNumberInRowOrCol(col, colOrRowIndex, number))
+                    if (board[indexofCube].isNumberInRowOrColInCube(col, colOrRowIndex, number))
                         return true;
                 }
             }
             return false;
         }
-        public static bool isPossibleIndexToNumber(int indexOfNumberInBoard, int indexOfNumberInCube, int number)
+        public bool isPossibleIndexToNumber(int indexOfNumberInBoard, int indexOfNumberInCube, int number)
         {
             int cubeNumber = getCubeNumberByIndex(indexOfNumberInBoard);
             int rowOfCubeNumber = cubeNumber / SqrtOfSizeOfBoard;
             int colOfCubeNumber = cubeNumber % SqrtOfSizeOfBoard;
+            int[] forParams = StaticMethods.forParameters(rowOfCubeNumber, false, SqrtOfSizeOfBoard);
 
-            int addToIndexOfCube = 1;
-            int indexofCube = rowOfCubeNumber * SqrtOfSizeOfBoard;
-            int endOfColOrRow = indexofCube + SqrtOfSizeOfBoard;
-            if (isNumberInRowOrColOfCubes(cubeNumber, false, indexOfNumberInCube / SqrtOfSizeOfBoard, addToIndexOfCube, indexofCube, endOfColOrRow, number))
+            if (isNumberInRowOrColOfCubes(cubeNumber, false, indexOfNumberInCube / SqrtOfSizeOfBoard, forParams[0], forParams[1], forParams[2], number))
                 return false;
-            addToIndexOfCube = SqrtOfSizeOfBoard;
-            indexofCube = colOfCubeNumber;
-            endOfColOrRow = colOfCubeNumber + SqrtOfSizeOfBoard * (SqrtOfSizeOfBoard - 1) + 1;
-            if (isNumberInRowOrColOfCubes(cubeNumber, true, indexOfNumberInCube % SqrtOfSizeOfBoard, addToIndexOfCube, indexofCube, endOfColOrRow, number))
+
+            forParams = StaticMethods.forParameters(colOfCubeNumber, true, SqrtOfSizeOfBoard);
+
+            if (isNumberInRowOrColOfCubes(cubeNumber, true, indexOfNumberInCube % SqrtOfSizeOfBoard, forParams[0], forParams[1], forParams[2], number))
                 return false;
             return true;
         }

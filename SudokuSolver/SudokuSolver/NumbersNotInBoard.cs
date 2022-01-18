@@ -14,8 +14,9 @@ namespace SudokuSolver
     
         static NumbersNotInBoard()
         {
-            numbersInRows = new Dictionary<int, List<int>>();
-            numbersInCols = new Dictionary<int, List<int>>();
+            numbersInRows = new Dictionary<int, List<int>>();//initialise
+            numbersInCols = new Dictionary<int, List<int>>();//initialise
+
         }
     }
 }

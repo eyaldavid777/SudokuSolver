@@ -48,11 +48,13 @@
     <Compile Include="ICell.cs" />
     <Compile Include="Cube.cs" />
     <Compile Include="IFileFormatReader.cs" />
-    <Compile Include="IInitialize.cs" />
+    <Compile Include="ISudokuCube.cs" />
     <Compile Include="NumbersNotInBoard.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SolvedCell.cs" />
+    <Compile Include="StaticMethods.cs" />
+    <Compile Include="ISudokuBoard.cs" />
     <Compile Include="UnsolvedCell.cs" />
   </ItemGroup>
   <ItemGroup>

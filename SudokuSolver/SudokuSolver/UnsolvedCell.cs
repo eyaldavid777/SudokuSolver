@@ -9,7 +9,7 @@ namespace SudokuSolver
     class UnsolvedCell : ICell
     {
         public List<int> optionalNumbers;
-        public UnsolvedCell(char number,int Index) :base(Index)
+        public UnsolvedCell(int Index) :base(Index)
         {
             optionalNumbers = new List<int>();
         }
