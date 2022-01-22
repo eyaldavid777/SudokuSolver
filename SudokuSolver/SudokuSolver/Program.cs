@@ -41,6 +41,15 @@ namespace SudokuSolver
           // checkIfKnownNumbersNotInBoardDeletesInRowOrCol.print();
 
 
+            ISudokuBoard checkRec = new Board("400030000630001006000000003000000000000410060000000000160000034340580000000000000");
+
+            checkRec.print();
+
+            checkRec.Solve();
+
+            checkRec.print();
+
+
             ISudokuBoard a = new Board("014002000000031000000000000000000008000500000000000000040000000000000000000000001");
 
             // a.print();

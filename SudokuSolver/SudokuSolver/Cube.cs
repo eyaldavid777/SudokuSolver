@@ -92,20 +92,56 @@ namespace SudokuSolver
             }
             return true;
         }
-        public void deleteNumberFromRowOrColInCube(bool col,int colOrRowIndexInCube, int number)
+
+        private void isNumberHasOnePlaceInCube(int number)
+        {
+            List<int> countNumberInCube = new List<int>();
+            for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
+                if (cube[indexInCube].GetType() == typeof(UnsolvedCell))
+                {
+                    if (((UnsolvedCell)cube[indexInCube]).optionalNumbers.Contains(number))
+                        countNumberInCube.Add(indexInCube);
+                }
+                else
+                    if (((SolvedCell)cube[indexInCube]).number == number)
+                        return;
+            if (countNumberInCube.Count == 1)
+                putTheNumberAndDeletOptions(countNumberInCube.ElementAt(0), number);
+        }
+        public void deleteNumberFromRowOrColInCube(bool col, int colOrRowIndexInCube, int number)
         {
             int[] forParams = StaticMethods.forParameters(colOrRowIndexInCube, col, inBoard.SqrtOfSizeOfBoard);
+            bool removeNumberFromCube = false;
             for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
                 if (cube[forParams[1]].GetType() == typeof(UnsolvedCell))
-                    ((UnsolvedCell)cube[forParams[1]]).optionalNumbers.Remove(number);
+                    if (((UnsolvedCell)cube[forParams[1]]).optionalNumbers.Remove(number))
+                        removeNumberFromCube = true;
+            if (removeNumberFromCube)
+                isNumberHasOnePlaceInCube(number);
         }
-        public void putTheNumberAndDeletOptions(int indexInCube, int knownNumber, int cubeNumber)
+
+        public void putTheNumberAndDeletOptions(int indexInCube, int knownNumber)
         {
             int indexInBoard = cube[indexInCube].getIndex();
+            List<int> optionalNumbersOfPlace = ((UnsolvedCell)cube[indexInCube]).optionalNumbers;
             cube[indexInCube] = new SolvedCell(knownNumber, indexInBoard);
+            optionalNumbersOfPlace.Remove(knownNumber);
+            foreach (int number in optionalNumbersOfPlace)
+                isNumberHasOnePlaceInCube(number);
 
             inBoard.deleteNumberFromRowOrCol(true,cube[indexInCube].getIndex(), indexInCube, knownNumber);
             inBoard.deleteNumberFromRowOrCol(false, cube[indexInCube].getIndex(), indexInCube, knownNumber);
+        }
+
+        public int countHowManySolvedCells()
+        {
+            int count = 0;
+            for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
+            {
+                if (cube[indexInCube].GetType() == typeof(SolvedCell))
+                    count++;
+            }
+            return count;
         }
     }
 }

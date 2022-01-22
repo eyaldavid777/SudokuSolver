@@ -163,12 +163,8 @@ namespace SudokuSolver
             int[] forParams = StaticMethods.forParameters(rowOrColOfCubeNumber, col, SqrtOfSizeOfBoard);
 
             for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
-            {
                 if (forParams[1] != cubeNumber)
-                {
                     board[forParams[1]].deleteNumberFromRowOrColInCube(col, indexOfNumberInCube/ SqrtOfSizeOfBoard,number);
-                }
-            }
         }
         private int isOptionsInTheSameRowOrCol(List<int> numberOfOptionsInCube)
         {
@@ -191,7 +187,7 @@ namespace SudokuSolver
         {
             int firstIndexInBoard = optionsInCubeByBoardIndex.ElementAt(0);
             int indexInCube = getRowOrColInCubeByIndex(firstIndexInBoard, false) * SqrtOfSizeOfBoard + getRowOrColInCubeByIndex(firstIndexInBoard, true);
-            board[indexOfCube].putTheNumberAndDeletOptions(indexInCube, mostCommonNumber, indexOfCube);
+            board[indexOfCube].putTheNumberAndDeletOptions(indexInCube, mostCommonNumber);
             placesOfNumbers[mostCommonNumber].Add(firstIndexInBoard);
         }
         private void theOptionsInTheSameRowOrCol(bool col,List<int> optionsInCubeByBoardIndex, int mostCommonNumber, int theSameRowOrCol, Dictionary<int, List<int>> numbersInRowOrCol)
@@ -256,11 +252,25 @@ namespace SudokuSolver
             }
         }
 
-
+        public int countHowManySolvedCells()
+        {
+            int count = 0;
+            for (int indexOfCube = 0; indexOfCube < sizeOfBoard; indexOfCube++)
+            {
+                count += board[indexOfCube].countHowManySolvedCells();
+            }
+            return count;
+        }
         public void Solve()
         {
             firstStepOfSolving();
-           
+            int howManySolvedCells = countHowManySolvedCells();
+            if (howManySolvedCells == sizeOfBoard * sizeOfBoard)
+                return;
+            if (howManySolvedCells == 0)
+            {
+
+            }
 
 
         }

@@ -47,6 +47,7 @@
     <Compile Include="FileReaderService.cs" />
     <Compile Include="ICell.cs" />
     <Compile Include="Cube.cs" />
+    <Compile Include="ICountSolvedCells.cs" />
     <Compile Include="IFileFormatReader.cs" />
     <Compile Include="ISudokuCube.cs" />
     <Compile Include="KnownNumbersNotInBoard.cs" />
