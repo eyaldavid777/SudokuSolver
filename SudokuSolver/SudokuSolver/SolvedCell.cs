@@ -8,19 +8,18 @@ namespace SudokuSolver
 {
     class SolvedCell : ICell
     {
-        public int number { get; set; }
+        public int number { get; }
 
         public SolvedCell(Dictionary<int, List<int>> placesOfNumbers,int Number, int Index) : base(Index)
         {
             number = Number - '0';
             // check if a number is found several times in the same row or col 
-            if (placesOfNumbers.ContainsKey(number))
-                placesOfNumbers[number].Add(Index);
-            else { 
-                placesOfNumbers.Add(number, new List<int>());
-                placesOfNumbers[number].Add(Index);
-            }
+               // check if the number is valid
+            placesOfNumbers[number].Add(Index);
         }
-
+        public SolvedCell(int Number, int Index) : base(Index)
+        {
+            number = Number;
+        }
     }
 }

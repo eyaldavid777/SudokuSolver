@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SudokuSolver
 {
-    class Cube
+    class Cube : ISudokuCube
     {
         private ICell[] cube;
         private ISudokuBoard inBoard;
@@ -39,37 +39,30 @@ namespace SudokuSolver
         {
             for (int colInCube = 0; colInCube < inBoard.SqrtOfSizeOfBoard; colInCube++)
             {
+                bool withDarkBlue = colInCube == inBoard.SqrtOfSizeOfBoard - 1;
                 if (cube[rowInCube * inBoard.SqrtOfSizeOfBoard + colInCube].GetType() == typeof(SolvedCell))
                 {
                     System.Console.Write("   {0}   ", ((SolvedCell)cube[rowInCube * inBoard.SqrtOfSizeOfBoard + colInCube]).number);
-                    if (colInCube == inBoard.SqrtOfSizeOfBoard - 1)
-                        Console.ForegroundColor = ConsoleColor.DarkBlue;
-                    System.Console.Write("|");
+                    StaticMethods.printAColOrCol(true, withDarkBlue, false); 
                 }
                 else
-                {
-                    if (colInCube == inBoard.SqrtOfSizeOfBoard - 1)
-                        Console.ForegroundColor = ConsoleColor.DarkBlue;
-                    System.Console.Write("       |");
-                }
+                    StaticMethods.printAColOrCol(true, withDarkBlue, true);
             }
             Console.ForegroundColor = ConsoleColor.White;
         }
-        public int fillOptionsInCube(int number,bool checkTheOptions)
+        public List<int> fillOptionsInCube(int number,bool checkTheOptions)
         {
-            int countOfOptionsInCube = 0;
-            for(int indexInCube =0; indexInCube < cube.Length; indexInCube++)
+            List<int> optionsInCubeByBoardIndex = new List<int>();
+            for (int indexInCube = 0; indexInCube < cube.Length; indexInCube++)
             {
-                if(cube[indexInCube].GetType() == typeof(UnsolvedCell))
-                {
+                if (cube[indexInCube].GetType() == typeof(UnsolvedCell))
                     if (!checkTheOptions || inBoard.isPossibleIndexToNumber(cube[indexInCube].getIndex(), indexInCube, number))
                     {
                         ((UnsolvedCell)cube[indexInCube]).optionalNumbers.Add(number);
-                        countOfOptionsInCube++;
+                        optionsInCubeByBoardIndex.Add(cube[indexInCube].getIndex());
                     }
-                }
             }
-            return countOfOptionsInCube;
+            return optionsInCubeByBoardIndex;
         }
         private bool isNumberInRowOrColInCubeFor(int addToIndexInCube,int indexInCube, int endOfColOrRow, int number)
         {
@@ -81,28 +74,12 @@ namespace SudokuSolver
             }
             return false;
         }
-        private bool isNumberInRowOrColInNumbersNotInBoard(Dictionary<int, List<int>> numbersInRowsOrCols,int colOrRowIndex, int number)
-        {
-            if (numbersInRowsOrCols.ContainsKey(colOrRowIndex))
-                foreach (int numberInColOrRow in numbersInRowsOrCols[colOrRowIndex])
-                {
-                    if (numberInColOrRow == number)
-                        return true;
-                }
-            return false;
-        }
         public bool isNumberInRowOrColInCube(bool col, int colOrRowIndex, int number)
         {
             int[] forParams = StaticMethods.forParameters(colOrRowIndex, col, inBoard.SqrtOfSizeOfBoard);
-            Dictionary<int, List<int>> numbersInRowsOrCols;
-            if (col)
-                numbersInRowsOrCols = NumbersNotInBoard.numbersInCols;
-            else
-                numbersInRowsOrCols = NumbersNotInBoard.numbersInRows;
             if (isNumberInRowOrColInCubeFor(forParams[0], forParams[1], forParams[2], number))
                 return true;
-            else
-                return isNumberInRowOrColInNumbersNotInBoard(numbersInRowsOrCols, colOrRowIndex, number);
+            return false;
         }
         public bool isRowOrColFull(bool col, int colOrRowIndex)
         {
@@ -114,6 +91,21 @@ namespace SudokuSolver
                     
             }
             return true;
+        }
+        public void deleteNumberFromRowOrColInCube(bool col,int colOrRowIndexInCube, int number)
+        {
+            int[] forParams = StaticMethods.forParameters(colOrRowIndexInCube, col, inBoard.SqrtOfSizeOfBoard);
+            for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
+                if (cube[forParams[1]].GetType() == typeof(UnsolvedCell))
+                    ((UnsolvedCell)cube[forParams[1]]).optionalNumbers.Remove(number);
+        }
+        public void putTheNumberAndDeletOptions(int indexInCube, int knownNumber, int cubeNumber)
+        {
+            int indexInBoard = cube[indexInCube].getIndex();
+            cube[indexInCube] = new SolvedCell(knownNumber, indexInBoard);
+
+            inBoard.deleteNumberFromRowOrCol(true,cube[indexInCube].getIndex(), indexInCube, knownNumber);
+            inBoard.deleteNumberFromRowOrCol(false, cube[indexInCube].getIndex(), indexInCube, knownNumber);
         }
     }
 }

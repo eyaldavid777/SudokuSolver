@@ -23,5 +23,24 @@ namespace SudokuSolver
             forParams[2] = forParams[1] + sqrtOfSizeOfBoard;
             return forParams;
         }
+        public static void printAColOrCol(bool col, bool DarkBlue, bool withSpaces)
+        {
+            if (DarkBlue)
+                Console.ForegroundColor = ConsoleColor.DarkBlue;
+            if (col)
+                if (withSpaces)
+                    System.Console.Write("       |");
+                else
+                    System.Console.Write("|");
+            else
+                 if (withSpaces)
+                System.Console.Write(" _______");
+            else
+                System.Console.Write("_______");
+            if (DarkBlue)
+                Console.ForegroundColor = ConsoleColor.White;
+        }
+
+       
     }
 }
