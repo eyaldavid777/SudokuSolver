@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace SudokuSolver
 {
-    interface IInitializeable
+    interface ICountSolvedCells
     {
-        void Initialize(String numbers, int index);
+        int countHowManySolvedCells();
     }
 }

@@ -8,6 +8,6 @@ namespace SudokuSolver
 {
     class FileReaderService : IFileFormatReader
     {
-
+        
     }
 }

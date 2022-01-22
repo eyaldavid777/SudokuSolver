@@ -15,7 +15,6 @@ namespace SudokuSolver
         {
             index = Index;
         }
-
         public int getIndex()
         {
             return index;
