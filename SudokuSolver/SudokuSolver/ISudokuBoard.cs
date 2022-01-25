@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SudokuSolver
 {
-    interface ISudokuBoard : ICountSolvedCells
+    interface ISudokuBoard 
     {
         Dictionary<int, List<int>> placesOfNumbers { get; set; }
         int sizeOfBoard { get; }

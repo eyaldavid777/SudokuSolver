@@ -10,22 +10,29 @@ namespace SudokuSolver
     {
 
         private ISudokuCube[] board;
-
-        public Board(String numbersInBoard)
-        {
-            sizeOfBoard = (int)Math.Sqrt(numbersInBoard.Length);
-            SqrtOfSizeOfBoard = (int)Math.Sqrt(sizeOfBoard);
-            placesOfNumbers = new Dictionary<int, List<int>>();
-            knownNumbersNotInBoard = new KnownNumbersNotInBoard();
-            board = new Cube[sizeOfBoard];
-            Initialize(numbersInBoard, 0);
-        }
         public Dictionary<int, List<int>> placesOfNumbers { get; set; }
         public int sizeOfBoard { get; }
         public int SqrtOfSizeOfBoard { get; }
         public KnownNumbersNotInBoard knownNumbersNotInBoard { get; set; }
+
+        public Board(String numbersInBoard)
+        {
+            SizeOfBoardIntegrity(numbersInBoard);
+            sizeOfBoard = (int)Math.Sqrt(numbersInBoard.Length);
+            SqrtOfSizeOfBoard = (int)Math.Sqrt(sizeOfBoard);
+            Initialize(numbersInBoard, 0);
+        }
+        public void SizeOfBoardIntegrity(string numbersInBoard)
+        {
+            double doubleSizeOfBoard = Math.Sqrt(numbersInBoard.Length);
+            if (!StaticMethods.isInt(Math.Sqrt(doubleSizeOfBoard)))
+                throw new InvalidBoardSizeException();
+        }
         private void Initialize(String numbersInBoard, int index)
         {
+            placesOfNumbers = new Dictionary<int, List<int>>();
+            knownNumbersNotInBoard = new KnownNumbersNotInBoard();
+            board = new Cube[sizeOfBoard];
             for (int numOfCube = 0; numOfCube < board.Length; numOfCube++)
             {
                 placesOfNumbers.Add(numOfCube + 1, new List<int>());
@@ -88,6 +95,7 @@ namespace SudokuSolver
                         printCols(true, false);
                 }
             }
+            Console.WriteLine("\n");
         }
         private int getCubeNumberByIndex(int index)
         {
@@ -96,9 +104,7 @@ namespace SudokuSolver
         }
         private int getRowOrColInCubeByIndex(int index,bool col)
         {
-            if (col)
-                return index % sizeOfBoard % SqrtOfSizeOfBoard;
-            return index / sizeOfBoard % SqrtOfSizeOfBoard;
+            return StaticMethods.getRowOcCol(col, index, sizeOfBoard) % SqrtOfSizeOfBoard;
         }
         private bool isplacesOfNumberContainsACube(int cubeNumber, int number)
         {
@@ -123,11 +129,7 @@ namespace SudokuSolver
         }
         private bool isNumberInRowOrColOfCubes(int cubeNumber,bool col,int colOrRowIndexInCube, int addToIndexOfCube, int indexofCube, int endOfColOrRow, int number)
         {
-            int colOrRowIndexInBoard;
-            if(col)
-                colOrRowIndexInBoard  = cubeNumber % SqrtOfSizeOfBoard * SqrtOfSizeOfBoard + colOrRowIndexInCube;
-            else
-                colOrRowIndexInBoard = cubeNumber / SqrtOfSizeOfBoard * SqrtOfSizeOfBoard + colOrRowIndexInCube;
+            int colOrRowIndexInBoard = StaticMethods.getRowOcCol(col, cubeNumber, SqrtOfSizeOfBoard) * SqrtOfSizeOfBoard + colOrRowIndexInCube; ;
             if (knownNumbersNotInBoard.isNumberInRowOrColInNumbersNotInBoard(col, colOrRowIndexInBoard, number))
                 return true;
             for (; indexofCube < endOfColOrRow; indexofCube += addToIndexOfCube)
@@ -155,33 +157,30 @@ namespace SudokuSolver
         public void deleteNumberFromRowOrCol(bool col,int indexOfNumberInBoard, int indexOfNumberInCube, int number)
         {
             int cubeNumber = getCubeNumberByIndex(indexOfNumberInBoard);
-            int rowOrColOfCubeNumber;
-            if(col)
-                rowOrColOfCubeNumber = cubeNumber % SqrtOfSizeOfBoard;
-            else
-                rowOrColOfCubeNumber = cubeNumber / SqrtOfSizeOfBoard;
-            int[] forParams = StaticMethods.forParameters(rowOrColOfCubeNumber, col, SqrtOfSizeOfBoard);
+            int rowOrColOfCube = StaticMethods.getRowOcCol(col, cubeNumber, SqrtOfSizeOfBoard);
+            int rowOrColInCube = StaticMethods.getRowOcCol(col, indexOfNumberInCube, SqrtOfSizeOfBoard);
+            int[] forParams = StaticMethods.forParameters(rowOrColOfCube, col, SqrtOfSizeOfBoard);
 
             for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
                 if (forParams[1] != cubeNumber)
-                    board[forParams[1]].deleteNumberFromRowOrColInCube(col, indexOfNumberInCube/ SqrtOfSizeOfBoard,number);
+                    board[forParams[1]].deleteNumberFromRowOrColInCube(col, rowOrColInCube, number);
         }
         private int isOptionsInTheSameRowOrCol(List<int> numberOfOptionsInCube)
         {
             int rowOfFirst = numberOfOptionsInCube.ElementAt(0) / SqrtOfSizeOfBoard;
             int colOfFirst = numberOfOptionsInCube.ElementAt(0) % SqrtOfSizeOfBoard;
-            bool row = true;
-            bool col = true;
+            bool sameRow = true;
+            bool sameCol = true;
             for (int i =1;i< numberOfOptionsInCube.Count; i++)
             {
                 if (numberOfOptionsInCube.ElementAt(i) / SqrtOfSizeOfBoard != rowOfFirst)
-                    row = false;
+                    sameRow = false;
                 if (numberOfOptionsInCube.ElementAt(i) % SqrtOfSizeOfBoard != colOfFirst)
-                    col = false;
-                if (!row && !col)
+                    sameCol = false;
+                if (!sameRow && !sameCol)
                     return -1;
             }
-            return row ? 1 : 2;
+            return sameRow ? 1 : 2;
         }     
         private void putKnownNumberAndDeletOptions(List<int>  optionsInCubeByBoardIndex,int indexOfCube,int mostCommonNumber)
         {
@@ -251,26 +250,51 @@ namespace SudokuSolver
                 placesOfNumbers.Remove(mostCommonNumber);
             }
         }
-
-        public int countHowManySolvedCells()
+        private void BoardIntegrityOfRowOrCol(bool col, List<int> CountNumberInRowAndCol,int RowOrColOfCube, int RowOrColInCube)
         {
-            int count = 0;
-            for (int indexOfCube = 0; indexOfCube < sizeOfBoard; indexOfCube++)
+            int[] forParams = StaticMethods.forParameters(RowOrColOfCube, col, SqrtOfSizeOfBoard);
+            for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
             {
-                count += board[indexOfCube].countHowManySolvedCells();
+                board[forParams[1]].rowOrColIntegrity(col, RowOrColInCube, RowOrColOfCube, CountNumberInRowAndCol);
             }
-            return count;
+            CountNumberInRowAndCol.Clear();
+        }
+        private void BoardIntegrityOfCube(List<int> CountNumberInCube, int cubeNumber)
+        {
+            board[cubeNumber].cubeIntegrity(CountNumberInCube, cubeNumber);
+            CountNumberInCube.Clear();
+        }
+        private void ScanCubesInBoard(bool checkRowsOrCols)
+        {
+            // checkRowsOrCols is true when we want to check integrity of 
+            // rows or cols and false when we want to check integrity of cubes.
+            List<int> CountNumberInRowAndColOrCube = new  List<int>();
+            for (int RowOrColOfCube = 0; RowOrColOfCube < SqrtOfSizeOfBoard; RowOrColOfCube++)
+            {
+                for (int RowOrColInCube = 0; RowOrColInCube < SqrtOfSizeOfBoard; RowOrColInCube++)
+                {
+                    if (checkRowsOrCols)
+                    {
+                        BoardIntegrityOfRowOrCol(true, CountNumberInRowAndColOrCube, RowOrColOfCube, RowOrColInCube);
+                        BoardIntegrityOfRowOrCol(false, CountNumberInRowAndColOrCube, RowOrColOfCube, RowOrColInCube);
+                    }
+                    else
+                        BoardIntegrityOfCube(CountNumberInRowAndColOrCube, RowOrColOfCube * SqrtOfSizeOfBoard + RowOrColInCube);
+                }
+            }
+        }
+        private void BoardIntegrity()
+        {
+            ScanCubesInBoard(true);
+            ScanCubesInBoard(false);
         }
         public void Solve()
         {
-            firstStepOfSolving();
-            int howManySolvedCells = countHowManySolvedCells();
-            if (howManySolvedCells == sizeOfBoard * sizeOfBoard)
-                return;
-            if (howManySolvedCells == 0)
-            {
+            BoardIntegrity();
 
-            }
+
+            firstStepOfSolving();
+
 
 
         }

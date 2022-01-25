@@ -92,7 +92,6 @@ namespace SudokuSolver
             }
             return true;
         }
-
         private void isNumberHasOnePlaceInCube(int number)
         {
             List<int> countNumberInCube = new List<int>();
@@ -106,7 +105,7 @@ namespace SudokuSolver
                     if (((SolvedCell)cube[indexInCube]).number == number)
                         return;
             if (countNumberInCube.Count == 1)
-                putTheNumberAndDeletOptions(countNumberInCube.ElementAt(0), number);
+                putTheNumberAndDeletOptions(countNumberInCube.ElementAt(0), number);               
         }
         public void deleteNumberFromRowOrColInCube(bool col, int colOrRowIndexInCube, int number)
         {
@@ -119,7 +118,6 @@ namespace SudokuSolver
             if (removeNumberFromCube)
                 isNumberHasOnePlaceInCube(number);
         }
-
         public void putTheNumberAndDeletOptions(int indexInCube, int knownNumber)
         {
             int indexInBoard = cube[indexInCube].getIndex();
@@ -132,16 +130,36 @@ namespace SudokuSolver
             inBoard.deleteNumberFromRowOrCol(true,cube[indexInCube].getIndex(), indexInCube, knownNumber);
             inBoard.deleteNumberFromRowOrCol(false, cube[indexInCube].getIndex(), indexInCube, knownNumber);
         }
-
-        public int countHowManySolvedCells()
+        public void rowOrColIntegrity(bool col,int rowOrColInCube, int rowOrColOfCube, List<int> CountNumberInRowAndCol)
         {
-            int count = 0;
+            int[] forParams = StaticMethods.forParameters(rowOrColInCube, col, inBoard.SqrtOfSizeOfBoard);
+            for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
+                if (cube[forParams[1]].GetType() == typeof(SolvedCell))
+                {
+                    int numberInCell = ((SolvedCell)cube[forParams[1]]).number;
+                    if (CountNumberInRowAndCol.Contains(numberInCell))
+                    {
+                        string rowOrCol;
+                        int rowOrColInBoard = rowOrColOfCube * inBoard.SqrtOfSizeOfBoard + rowOrColInCube;
+                        if (col)
+                            rowOrCol = "col";
+                        else
+                            rowOrCol = "row";
+                        throw new SameNumberInARowOrColException("The number " + numberInCell + " appears more than once in the " + rowOrCol + " "+ rowOrColInBoard);
+                    }                       
+                    CountNumberInRowAndCol.Add(numberInCell);                 
+                }             
+        }
+
+        public void cubeIntegrity(List<int> CountNumberInRowAndCol,int cubeNumber) {
             for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
-            {
                 if (cube[indexInCube].GetType() == typeof(SolvedCell))
-                    count++;
-            }
-            return count;
+                {
+                    int numberInCell = ((SolvedCell)cube[indexInCube]).number;
+                    if (CountNumberInRowAndCol.Contains(numberInCell))
+                        throw new SameNumberInACubeException("The number " + numberInCell + " appears more than once in the cube "+ cubeNumber);
+                    CountNumberInRowAndCol.Add(numberInCell);
+                }
         }
     }
 }

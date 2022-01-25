@@ -10,67 +10,78 @@ namespace SudokuSolver
     {
         static void Main(string[] args)
         {
-            ISudokuBoard smallcheck = new Board("0140020000000310");
-         //   smallcheck.print();
+            try
+            {
+               // ISudokuBoard letterscheck = new Board("1000000400200300");
 
-            smallcheck.Solve();
+                ISudokuBoard letterscheck = new Board("12");
+                //ISudokuBoard letterscheck = new Board("30400102040320101");
+                letterscheck.print();
+                letterscheck.Solve();
+                letterscheck.print();
 
-           //  smallcheck.print();
+            }
+            catch (SudokuExceptions s)
+            {
+                Console.WriteLine(s.Message);
+            }
+          
 
-            ISudokuBoard b = new Board("0001200000300000");
+           // ISudokuBoard b = new Board("0001200000300000");
             // check if solving a cell deletes it's options 
             // in the cells with the same row and col
-            //  b.print();
+             // b.print();
 
-            b.Solve();
+           // b.Solve();
 
-            // b.print();
+           //  b.print();
 
-            ISudokuBoard checkIfKnownNumbersNotInBoardWorks = new Board("100000000002000000000000000543020000600000870000000001000000000001000000000000000");
+           // ISudokuBoard checkIfKnownNumbersNotInBoardWorks = new Board("100000000002000000000000000543020000600000870000000001000000000001000000000000000");
            // checkIfKnownNumbersNotInBoardWorks.print();
 
-            checkIfKnownNumbersNotInBoardWorks.Solve();
+            //checkIfKnownNumbersNotInBoardWorks.Solve();
 
               // checkIfKnownNumbersNotInBoardWorks.print();
 
-            ISudokuBoard checkIfKnownNumbersNotInBoardDeletesInRowOrCol = new Board("0000000010000002000000000000000203450780000161000000000000000000000001000000000004");
+            //ISudokuBoard checkIfKnownNumbersNotInBoardDeletesInRowOrCol = new Board("0000000010000002000000000000000203450780000161000000000000000000000001000000000004");
            // checkIfKnownNumbersNotInBoardDeletesInRowOrCol.print();
 
-            checkIfKnownNumbersNotInBoardDeletesInRowOrCol.Solve();
+           // checkIfKnownNumbersNotInBoardDeletesInRowOrCol.Solve();
 
           // checkIfKnownNumbersNotInBoardDeletesInRowOrCol.print();
 
 
-            ISudokuBoard checkRec = new Board("400030000630001006000000003000000000000410060000000000160000034340580000000000000");
+           // ISudokuBoard checkRec = new Board("400030000630001006000000003000000000000410060000000000160000034340580000000000000");
 
-            checkRec.print();
+          //  checkRec.print();
 
-            checkRec.Solve();
+          //  checkRec.Solve();
 
-            checkRec.print();
+          //  checkRec.print();
 
 
-            ISudokuBoard a = new Board("014002000000031000000000000000000008000500000000000000040000000000000000000000001");
+           // ISudokuBoard a = new Board("014002000000031000000000000000000008000500000000000000040000000000000000000000001");
 
             // a.print();
 
-            a.Solve();
+          //  a.Solve();
           //  a.print();
 
-            ISudokuBoard c = new Board("009800000501072000000000613090000032010396000753000000000400308105000400070020000");
+           // ISudokuBoard c = new Board("009800000501072000000000613090000032010396000753000000000400308105000400070020000");
             //c.print();
 
-            c.Solve();
+          //  c.Solve();
           //  c.print();
 
-            ISudokuBoard d = new Board("000805013905203600603090204001000005040100706256304890590007102102080470004910038");
+          //  ISudokuBoard d = new Board("000805013905203600603090204001000005040100706256304890590007102102080470004910038");
            // d.print();
 
-            d.Solve();
+          //  d.Solve();
            // d.print();
 
-            d.Solve();
+           // d.Solve();
           //  d.print();
+
 
         }
     }

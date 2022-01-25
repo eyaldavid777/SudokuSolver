@@ -41,6 +41,18 @@ namespace SudokuSolver
                 Console.ForegroundColor = ConsoleColor.White;
         }
 
-       
+        public static int getRowOcCol(bool col,int number1,int number2)
+        {
+            if (col)
+                return number1 % number2;
+            return number1 / number2;
+        }
+
+        public static bool isInt(double number)
+        {
+            if (number == Math.Truncate(number))
+                return true;
+            return false;
+        }
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SudokuSolver
 {
-    interface ISudokuCube : ICountSolvedCells
+    interface ISudokuCube 
     {
         void print(int rowInCube);
 
@@ -20,6 +20,9 @@ namespace SudokuSolver
 
         void deleteNumberFromRowOrColInCube(bool col, int colOrRowIndexInCube, int number);
 
+        void rowOrColIntegrity(bool col, int RowOrColInCube, int RowOrColOfCube, List<int> CountNumberInRowAndCol);
+
+        void cubeIntegrity(List<int> CountNumberInRowAndCol, int cubeNumber);
 
     }
 }

@@ -5,3 +5,8 @@ D:\C#\SudokuSolver\SudokuSolver\obj\Debug\SudokuSolver.csproj.AssemblyReference.
 D:\C#\SudokuSolver\SudokuSolver\obj\Debug\SudokuSolver.csproj.CoreCompileInputs.cache
 D:\C#\SudokuSolver\SudokuSolver\obj\Debug\SudokuSolver.exe
 D:\C#\SudokuSolver\SudokuSolver\obj\Debug\SudokuSolver.pdb
+D:\C#\SudokuSolver\SudokuSolver\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.dll
+D:\C#\SudokuSolver\SudokuSolver\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll
+D:\C#\SudokuSolver\SudokuSolver\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.xml
+D:\C#\SudokuSolver\SudokuSolver\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.xml
+D:\C#\SudokuSolver\SudokuSolver\obj\Debug\SudokuSolver.csproj.CopyComplete
