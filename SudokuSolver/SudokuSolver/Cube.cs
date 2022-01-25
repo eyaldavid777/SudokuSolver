@@ -161,5 +161,15 @@ namespace SudokuSolver
                     CountNumberInRowAndCol.Add(numberInCell);
                 }
         }
+        public int countHowManySolvedCells()
+        {
+            int count = 0;
+            for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
+            {
+                if (cube[indexInCube].GetType() == typeof(SolvedCell))
+                    count++;
+            }
+            return count;
+        }
     }
 }

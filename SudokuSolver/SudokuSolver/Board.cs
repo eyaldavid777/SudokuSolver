@@ -288,13 +288,27 @@ namespace SudokuSolver
             ScanCubesInBoard(true);
             ScanCubesInBoard(false);
         }
+        private int countHowManySolvedCells()
+        {
+            int count = 0;
+            for (int indexOfCube = 0; indexOfCube < sizeOfBoard; indexOfCube++)
+                count += board[indexOfCube].countHowManySolvedCells();
+            return count;
+        }
+
         public void Solve()
         {
             BoardIntegrity();
 
 
             firstStepOfSolving();
-
+            int howManySolvedCells = countHowManySolvedCells();
+            if (howManySolvedCells == sizeOfBoard * sizeOfBoard)
+            {
+                Console.WriteLine("solved");
+                return;
+            }
+            Console.WriteLine("did not solve");
 
 
         }

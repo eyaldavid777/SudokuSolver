@@ -13,8 +13,9 @@ namespace SudokuSolver
             try
             {
                // ISudokuBoard letterscheck = new Board("1000000400200300");
+                ISudokuBoard letterscheck = new Board("1000000000000000");
 
-                ISudokuBoard letterscheck = new Board("12");
+                //ISudokuBoard letterscheck = new Board("12");
                 //ISudokuBoard letterscheck = new Board("30400102040320101");
                 letterscheck.print();
                 letterscheck.Solve();
@@ -25,7 +26,7 @@ namespace SudokuSolver
             {
                 Console.WriteLine(s.Message);
             }
-          
+            
 
            // ISudokuBoard b = new Board("0001200000300000");
             // check if solving a cell deletes it's options 

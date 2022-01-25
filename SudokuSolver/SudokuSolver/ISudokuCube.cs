@@ -24,5 +24,6 @@ namespace SudokuSolver
 
         void cubeIntegrity(List<int> CountNumberInRowAndCol, int cubeNumber);
 
+        int countHowManySolvedCells();
     }
 }
