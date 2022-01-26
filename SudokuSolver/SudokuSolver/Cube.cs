@@ -21,11 +21,10 @@ namespace SudokuSolver
             for (int indexInCube = 0; indexInCube < cube.Length; indexInCube++)
             {
                 int index = indexInBoard(indexInCube, numOfCube);
-
                 if (numbersInBoard[index] == '0')
-                    cube[indexInCube] = new UnsolvedCell(index);
+                    cube[indexInCube] = new Cell(index);
                 else
-                    cube[indexInCube] = new SolvedCell(inBoard.placesOfNumbers,numbersInBoard[index], index);
+                    cube[indexInCube] = new Cell(inBoard.placesOfNumbers, numbersInBoard[index], index);
             }
         }
         private int indexInBoard(int indexInCube, int numOfCube)
@@ -40,9 +39,9 @@ namespace SudokuSolver
             for (int colInCube = 0; colInCube < inBoard.SqrtOfSizeOfBoard; colInCube++)
             {
                 bool withDarkBlue = colInCube == inBoard.SqrtOfSizeOfBoard - 1;
-                if (cube[rowInCube * inBoard.SqrtOfSizeOfBoard + colInCube].GetType() == typeof(SolvedCell))
+                if (cube[rowInCube * inBoard.SqrtOfSizeOfBoard + colInCube].isSolved())
                 {
-                    System.Console.Write("   {0}   ", ((SolvedCell)cube[rowInCube * inBoard.SqrtOfSizeOfBoard + colInCube]).number);
+                    System.Console.Write("   {0}   ", cube[rowInCube * inBoard.SqrtOfSizeOfBoard + colInCube].number);
                     StaticMethods.printAColOrCol(true, withDarkBlue, false); 
                 }
                 else
@@ -55,11 +54,11 @@ namespace SudokuSolver
             List<int> optionsInCubeByBoardIndex = new List<int>();
             for (int indexInCube = 0; indexInCube < cube.Length; indexInCube++)
             {
-                if (cube[indexInCube].GetType() == typeof(UnsolvedCell))
-                    if (!checkTheOptions || inBoard.isPossibleIndexToNumber(cube[indexInCube].getIndex(), indexInCube, number))
+                if (!cube[indexInCube].isSolved())
+                    if (!checkTheOptions || inBoard.isPossibleIndexToNumber(cube[indexInCube].index, indexInCube, number))
                     {
-                        ((UnsolvedCell)cube[indexInCube]).optionalNumbers.Add(number);
-                        optionsInCubeByBoardIndex.Add(cube[indexInCube].getIndex());
+                        cube[indexInCube].optionalNumbers.Add(number);
+                        optionsInCubeByBoardIndex.Add(cube[indexInCube].index);
                     }
             }
             return optionsInCubeByBoardIndex;
@@ -68,8 +67,8 @@ namespace SudokuSolver
         {
             for (; indexInCube < endOfColOrRow; indexInCube += addToIndexInCube)
             {
-                if (cube[indexInCube].GetType() == typeof(SolvedCell))
-                    if (((SolvedCell)cube[indexInCube]).number == number)
+                if (cube[indexInCube].isSolved())
+                    if (cube[indexInCube].number == number)
                         return true;
             }
             return false;
@@ -85,24 +84,21 @@ namespace SudokuSolver
         {
             int[] forParams = StaticMethods.forParameters(colOrRowIndex, col, inBoard.SqrtOfSizeOfBoard);
             for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
-            {
-                if (cube[forParams[1]].GetType() == typeof(UnsolvedCell))
+                if (!cube[forParams[1]].isSolved())
                     return false;
-                    
-            }
             return true;
         }
         private void isNumberHasOnePlaceInCube(int number)
         {
             List<int> countNumberInCube = new List<int>();
             for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
-                if (cube[indexInCube].GetType() == typeof(UnsolvedCell))
+                if (!cube[indexInCube].isSolved())
                 {
-                    if (((UnsolvedCell)cube[indexInCube]).optionalNumbers.Contains(number))
+                    if (cube[indexInCube].optionalNumbers.Contains(number))
                         countNumberInCube.Add(indexInCube);
                 }
                 else
-                    if (((SolvedCell)cube[indexInCube]).number == number)
+                    if (cube[indexInCube].number == number)
                         return;
             if (countNumberInCube.Count == 1)
                 putTheNumberAndDeletOptions(countNumberInCube.ElementAt(0), number);               
@@ -112,31 +108,30 @@ namespace SudokuSolver
             int[] forParams = StaticMethods.forParameters(colOrRowIndexInCube, col, inBoard.SqrtOfSizeOfBoard);
             bool removeNumberFromCube = false;
             for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
-                if (cube[forParams[1]].GetType() == typeof(UnsolvedCell))
-                    if (((UnsolvedCell)cube[forParams[1]]).optionalNumbers.Remove(number))
+                if (!cube[forParams[1]].isSolved())
+                    if (cube[forParams[1]].optionalNumbers.Remove(number))
                         removeNumberFromCube = true;
             if (removeNumberFromCube)
                 isNumberHasOnePlaceInCube(number);
         }
         public void putTheNumberAndDeletOptions(int indexInCube, int knownNumber)
         {
-            int indexInBoard = cube[indexInCube].getIndex();
-            List<int> optionalNumbersOfPlace = ((UnsolvedCell)cube[indexInCube]).optionalNumbers;
-            cube[indexInCube] = new SolvedCell(knownNumber, indexInBoard);
+            List<int> optionalNumbersOfPlace = cube[indexInCube].optionalNumbers;
+            cube[indexInCube].solvedTheCell(knownNumber);
             optionalNumbersOfPlace.Remove(knownNumber);
             foreach (int number in optionalNumbersOfPlace)
                 isNumberHasOnePlaceInCube(number);
 
-            inBoard.deleteNumberFromRowOrCol(true,cube[indexInCube].getIndex(), indexInCube, knownNumber);
-            inBoard.deleteNumberFromRowOrCol(false, cube[indexInCube].getIndex(), indexInCube, knownNumber);
+            inBoard.deleteNumberFromRowOrCol(true,cube[indexInCube].index, indexInCube, knownNumber);
+            inBoard.deleteNumberFromRowOrCol(false, cube[indexInCube].index, indexInCube, knownNumber);
         }
         public void rowOrColIntegrity(bool col,int rowOrColInCube, int rowOrColOfCube, List<int> CountNumberInRowAndCol)
         {
             int[] forParams = StaticMethods.forParameters(rowOrColInCube, col, inBoard.SqrtOfSizeOfBoard);
             for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
-                if (cube[forParams[1]].GetType() == typeof(SolvedCell))
+                if (cube[forParams[1]].isSolved())
                 {
-                    int numberInCell = ((SolvedCell)cube[forParams[1]]).number;
+                    int numberInCell = cube[forParams[1]].number;
                     if (CountNumberInRowAndCol.Contains(numberInCell))
                     {
                         string rowOrCol;
@@ -153,9 +148,9 @@ namespace SudokuSolver
 
         public void cubeIntegrity(List<int> CountNumberInRowAndCol,int cubeNumber) {
             for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
-                if (cube[indexInCube].GetType() == typeof(SolvedCell))
+                if (cube[indexInCube].isSolved())
                 {
-                    int numberInCell = ((SolvedCell)cube[indexInCube]).number;
+                    int numberInCell = cube[indexInCube].number;
                     if (CountNumberInRowAndCol.Contains(numberInCell))
                         throw new SameNumberInACubeException("The number " + numberInCell + " appears more than once in the cube "+ cubeNumber);
                     CountNumberInRowAndCol.Add(numberInCell);
@@ -166,7 +161,7 @@ namespace SudokuSolver
             int count = 0;
             for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
             {
-                if (cube[indexInCube].GetType() == typeof(SolvedCell))
+                if (cube[indexInCube].isSolved())
                     count++;
             }
             return count;

@@ -7,17 +7,13 @@ using System.Threading.Tasks;
 namespace SudokuSolver
 {
 
-    abstract class ICell
+    interface ICell
     {
-        protected int index;
-        
-        public ICell(int Index)
-        {
-            index = Index;
-        }
-        public int getIndex()
-        {
-            return index;
-        }
+        int number { get; set; }
+       int index { get; }
+        List<int> optionalNumbers { get; set; }
+        void solvedTheCell(int knownNumber);
+
+        bool isSolved();
     }
 }

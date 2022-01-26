@@ -12,11 +12,11 @@ namespace SudokuSolver
         {
             try
             {
-               // ISudokuBoard letterscheck = new Board("1000000400200300");
-                ISudokuBoard letterscheck = new Board("1000000000000000");
+                //ISudokuBoard letterscheck = new Board("1000000400200300");
+                //ISudokuBoard letterscheck = new Board("1000000000000000");
 
                 //ISudokuBoard letterscheck = new Board("12");
-                //ISudokuBoard letterscheck = new Board("30400102040320101");
+                ISudokuBoard letterscheck = new Board("3040010204032010");
                 letterscheck.print();
                 letterscheck.Solve();
                 letterscheck.print();

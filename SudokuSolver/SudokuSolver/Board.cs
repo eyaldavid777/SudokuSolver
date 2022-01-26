@@ -182,12 +182,13 @@ namespace SudokuSolver
             }
             return sameRow ? 1 : 2;
         }     
-        private void putKnownNumberAndDeletOptions(List<int>  optionsInCubeByBoardIndex,int indexOfCube,int mostCommonNumber)
+        private void putKnownNumberAndDeletOptions(List<int>  optionsInCubeByBoardIndex,int indexOfCube,int mostCommonNumber,bool firstStepOfSolving)
         {
             int firstIndexInBoard = optionsInCubeByBoardIndex.ElementAt(0);
             int indexInCube = getRowOrColInCubeByIndex(firstIndexInBoard, false) * SqrtOfSizeOfBoard + getRowOrColInCubeByIndex(firstIndexInBoard, true);
             board[indexOfCube].putTheNumberAndDeletOptions(indexInCube, mostCommonNumber);
-            placesOfNumbers[mostCommonNumber].Add(firstIndexInBoard);
+            if(firstStepOfSolving)
+                placesOfNumbers[mostCommonNumber].Add(firstIndexInBoard);
         }
         private void theOptionsInTheSameRowOrCol(bool col,List<int> optionsInCubeByBoardIndex, int mostCommonNumber, int theSameRowOrCol, Dictionary<int, List<int>> numbersInRowOrCol)
         {
@@ -210,7 +211,7 @@ namespace SudokuSolver
                 case 1:
                     // put the number in it's only place and delete the options of the number
                     // in the cells with the same row and col
-                    putKnownNumberAndDeletOptions(optionsInCubeByBoardIndex, indexOfCube, mostCommonNumber);
+                    putKnownNumberAndDeletOptions(optionsInCubeByBoardIndex, indexOfCube, mostCommonNumber,true);
                     break;
                 default:
                     if (optionsInCubeByBoardIndex.Count <= SqrtOfSizeOfBoard)
