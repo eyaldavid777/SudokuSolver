@@ -54,5 +54,11 @@ namespace SudokuSolver
                 return true;
             return false;
         }
+
+        public static void SortByValue(Dictionary<int, List<int>> dict)
+        {
+            // sorts 'dict' by value - by the length of the list
+            dict = dict.OrderByDescending(x => x.Value.Count).ToDictionary(x => x.Key, x => x.Value);
+        }
     }
 }

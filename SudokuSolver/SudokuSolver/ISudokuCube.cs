@@ -16,14 +16,20 @@ namespace SudokuSolver
 
         bool isRowOrColFull(bool col, int colOrRowIndex);
 
-        void putTheNumberAndDeletOptions(int indexInCube, int knownNumber);
+        void putTheNumberAndDeletOptions(int indexInCube, int knownNumber, bool deletFromRow, bool deletFromCol);
 
         void deleteNumberFromRowOrColInCube(bool col, int colOrRowIndexInCube, int number);
 
         void rowOrColIntegrity(bool col, int RowOrColInCube, int RowOrColOfCube, List<int> CountNumberInRowAndCol);
 
-        void cubeIntegrity(List<int> CountNumberInRowAndCol, int cubeNumber);
+        void cubeIntegrity(List<int> CountNumberInRowAndCol);
 
         int countHowManySolvedCells();
+
+        void checksOptionsOfARowOrAColInCube(bool col, int rowOrColInCube, Dictionary<int, List<int>> optionsOfMissingNumbersInRowOrCol);
+
+        void deleteNumberFromCube(int number, Dictionary<int, List<int>> optionsOfMissingNumbersInRowOrCol);
+
+        List<int> getOptionalNumbers(int indexInCube); //////////////////
     }
 }
