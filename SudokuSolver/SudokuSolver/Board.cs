@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace SudokuSolver
 {
+    enum Type{row,col,cube}
     class Board : ISudokuBoard
     {
 
@@ -14,6 +15,9 @@ namespace SudokuSolver
         public int sizeOfBoard { get; }
         public int SqrtOfSizeOfBoard { get; }
         public KnownNumbersNotInBoard knownNumbersNotInBoard { get; set; }
+
+
+        public int step { get; set; }
 
         public Board(String numbersInBoard)
         {
@@ -30,8 +34,9 @@ namespace SudokuSolver
         }
         private void Initialize(String numbersInBoard, int index)
         {
+            step = 1;
             placesOfNumbers = new Dictionary<int, List<int>>();
-            InitializeADictionaryOfNumbersInBoard(placesOfNumbers);
+            InitializePlacesOfNumbers();
             knownNumbersNotInBoard = new KnownNumbersNotInBoard();
             board = new Cube[sizeOfBoard];
             for (int numOfCube = 0; numOfCube < board.Length; numOfCube++)
@@ -39,19 +44,19 @@ namespace SudokuSolver
                 board[numOfCube] = new Cube(numbersInBoard, numOfCube, this);
             }
         }
-        private void InitializeADictionaryOfNumbersInBoard(Dictionary<int, List<int>> dictionaryOfNumbersInBoard)
+        private void InitializePlacesOfNumbers()
         {
             for (int numOfCube = 0; numOfCube < sizeOfBoard; numOfCube++)
             {
-                if (dictionaryOfNumbersInBoard.ContainsKey(numOfCube + 1))
-                    dictionaryOfNumbersInBoard[numOfCube + 1] = new List<int>();
+                if (placesOfNumbers.ContainsKey(numOfCube + 1))
+                    placesOfNumbers[numOfCube + 1] = new List<int>();
                 else
-                    dictionaryOfNumbersInBoard.Add(numOfCube + 1, new List<int>());
+                    placesOfNumbers.Add(numOfCube + 1, new List<int>());
             }
         }
         private void printALine()
         {
-            System.Console.Write("       ");
+            System.Console.Write("   ");
             for (int i = 0; i < sizeOfBoard; i++)
                 StaticMethods.printAColOrCol(false, true, true);
             System.Console.WriteLine();
@@ -140,7 +145,7 @@ namespace SudokuSolver
         }
         private bool isNumberInRowOrColOfCubes(int cubeNumber,bool col,int colOrRowIndexInCube,int[] forParams, int number)
         {
-            int colOrRowIndexInBoard = StaticMethods.getRowOcCol(col, cubeNumber, SqrtOfSizeOfBoard) * SqrtOfSizeOfBoard + colOrRowIndexInCube; ;
+            int colOrRowIndexInBoard = StaticMethods.getRowOcCol(col, cubeNumber, SqrtOfSizeOfBoard) * SqrtOfSizeOfBoard + colOrRowIndexInCube; 
             if (knownNumbersNotInBoard.isNumberInRowOrColInNumbersNotInBoard(col, colOrRowIndexInBoard, number))
                 return true;
             for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
@@ -204,15 +209,21 @@ namespace SudokuSolver
             }
             return sameRow ? 1 : 2;
         }     
-        private void putKnownNumberAndDeletOptions(bool firstStepOfSolving,int indexInBoard,int mostCommonNumber, bool deletFromRow, bool deletFromCol)
+        private void putKnownNumberAndDeletOptions(int indexInBoard,int mostCommonNumber, bool deletFromRow, bool deletFromCol)
         {
             int indexInCube = getIndexInCubeByIndexInBoard(indexInBoard);
             board[getCubeNumberByIndex(indexInBoard)].putTheNumberAndDeletOptions(indexInCube, mostCommonNumber, deletFromRow, deletFromCol);
-            if(firstStepOfSolving)
+            if(step == 1)
                 placesOfNumbers[mostCommonNumber].Add(indexInBoard);
         }
-        private void theOptionsInTheSameRowOrCol(bool col,List<int> optionsInCubeByBoardIndex, int mostCommonNumber, int theSameRowOrCol, Dictionary<int, List<int>> numbersInRowOrCol)
+        private void theOptionsInTheSameRowOrCol(bool col,List<int> optionsInCubeByBoardIndex, int mostCommonNumber, int theSameRowOrCol)
         {
+            Dictionary<int, List<int>> numbersInRowOrCol;
+            if (col)
+                numbersInRowOrCol = knownNumbersNotInBoard.numbersInCols;
+            else
+                numbersInRowOrCol = knownNumbersNotInBoard.numbersInRows;
+
             if (!numbersInRowOrCol.ContainsKey(theSameRowOrCol))
             {
                 numbersInRowOrCol.Add(theSameRowOrCol, new List<int>());
@@ -231,10 +242,10 @@ namespace SudokuSolver
                     case -1: // the options dont have the same row or col
                         break;
                     case 1:  // the options have the same row
-                        theOptionsInTheSameRowOrCol(false, optionsInCubeByBoardIndex, mostCommonNumber, optionsInCubeByBoardIndex.ElementAt(0) / sizeOfBoard, knownNumbersNotInBoard.numbersInRows);
+                        theOptionsInTheSameRowOrCol(false, optionsInCubeByBoardIndex, mostCommonNumber, optionsInCubeByBoardIndex.ElementAt(0) / sizeOfBoard);
                         break;
                     case 2: // the options have the same col
-                        theOptionsInTheSameRowOrCol(true, optionsInCubeByBoardIndex, mostCommonNumber, optionsInCubeByBoardIndex.ElementAt(0) % sizeOfBoard, knownNumbersNotInBoard.numbersInCols);
+                        theOptionsInTheSameRowOrCol(true, optionsInCubeByBoardIndex, mostCommonNumber, optionsInCubeByBoardIndex.ElementAt(0) % sizeOfBoard);
                         break;
                 }
         }
@@ -248,7 +259,7 @@ namespace SudokuSolver
                 case 1:
                     // put the number in it's only place and delete the options of the number
                     // in the cells with the same row and col
-                    putKnownNumberAndDeletOptions(true,optionsInCubeByBoardIndex.ElementAt(0), mostCommonNumber,true,true);
+                    putKnownNumberAndDeletOptions(optionsInCubeByBoardIndex.ElementAt(0), mostCommonNumber,true,true);
                     break;
                 default:
                     // if the options of 'mostCommonNumber' in the same row or col you can
@@ -281,22 +292,34 @@ namespace SudokuSolver
                 placesOfNumbers.Remove(mostCommonNumber);
             }
         }     
-        private bool isNumberHasOnePlaceInRowOrCo(bool col,int MissingNumberInDic, int rowOrColInBoard,Dictionary<int, List<int>> optionsOfMissingNumbersInRowOrCol)
+        private bool isNumberHasOnePlaceInRowOrCol(bool col,int MissingNumberInDic, int rowOrColInCube)
         {
-            if (optionsOfMissingNumbersInRowOrCol[MissingNumberInDic].Count == 1)
+            // if MissingNumberInDic has only one place in rowOrColInBoard then
+            if (placesOfNumbers[MissingNumberInDic].Count == 1)
             {
-                int indexInBoard = optionsOfMissingNumbersInRowOrCol[MissingNumberInDic].ElementAt(0);
+                // indexInBoard = only option of MissingNumberInDic in rowOrColInBoard
+                int indexInBoard = placesOfNumbers[MissingNumberInDic].ElementAt(0);
                 int indexInCube = getIndexInCubeByIndexInBoard(indexInBoard);
-                List<int> optionalNumbersOfPlace = board[getCubeNumberByIndex(indexInBoard)].getOptionalNumbers(indexInCube);
+                int indexOfCube = getCubeNumberByIndex(indexInBoard);
+                // optionalNumbersOfPlace = save the options at index 'indexInBoard'
+                List<int> optionalNumbersOfPlace = board[indexOfCube].getOptionalNumbers(indexInCube);
+                // remove from optionalNumbersOfPlace the MissingNumberInDic that you found
                 optionalNumbersOfPlace.Remove(MissingNumberInDic);
-                putKnownNumberAndDeletOptions(false, indexInBoard, MissingNumberInDic, !col, col);
-                board[getCubeNumberByIndex(indexInBoard)].deleteNumberFromCube(MissingNumberInDic, optionsOfMissingNumbersInRowOrCol);
-                // remove from optionsOfMissingNumbersInRowOrCol the MissingNumberInDic that you found
-                optionsOfMissingNumbersInRowOrCol.Remove(MissingNumberInDic);
+                putKnownNumberAndDeletOptions( indexInBoard, MissingNumberInDic, !col, col);
+                // delete all the options of MissingNumberInDic from the cube we found it at
+                board[indexOfCube].deleteNumberFromCube(MissingNumberInDic,col, rowOrColInCube);
+                // remove from placesOfNumbers the MissingNumberInDic that you found
+                placesOfNumbers.Remove(MissingNumberInDic);
+
+                InitializePlacesOfNumbers();
+                initializePlacesOfNumbersWithOptions(col, StaticMethods.getRowOcCol(col, indexInBoard, sizeOfBoard));
+
                 foreach (int optionalNumber in optionalNumbersOfPlace)
                 {
-                    optionsOfMissingNumbersInRowOrCol[optionalNumber].Remove(indexInBoard);
-                    if (optionsOfMissingNumbersInRowOrCol[optionalNumber].Count == 0)
+                    if (!placesOfNumbers.ContainsKey(optionalNumber))
+                        continue;
+                    placesOfNumbers[optionalNumber].Remove(indexInBoard);
+                    if (placesOfNumbers[optionalNumber].Count == 0)
                     {
                        // the row/col getRowOcCol(col,indexInBoard,SqrtOfSizeOfBoard) can not contains
                        // both of the numbers optionalNumber,MissingNumberInDic because the only place
@@ -304,47 +327,249 @@ namespace SudokuSolver
                     }
                     else
                     {
-                        isNumberHasOnePlaceInRowOrCo( col,optionalNumber, rowOrColInBoard, optionsOfMissingNumbersInRowOrCol);
+                        isNumberHasOnePlaceInRowOrCol( col,optionalNumber, rowOrColInCube);
                     }
                 }
                 return true;
             }
             else
             {
-                if (optionsOfMissingNumbersInRowOrCol[MissingNumberInDic].Count == 0)
+                if (placesOfNumbers[MissingNumberInDic].Count == 0)
                 {
-                    // the row or col rowOrColInBoard can not conatins the number MissingNumberInDic                    
+                    // the row or col rowOrColInBoard can not conatins the number MissingNumberInDic
+                    // 
+                    // אם למשתנה יש יותר מאופציה אחת תבדוק האם האופציות באותה שורה ועמודה
+
                 }
             }
             return false;
         }
-
-        public void checkOptionsOfMissingNumbersInRowOrCol(bool col,int rowOrColInBoard,Dictionary<int, List<int>> optionsOfMissingNumbersInRowOrCol)
+        
+        
+        private bool compareListsOfIndexes(List<int> firstIndexsesList, List<int> secondIndexsesList)
         {
-            for (int indexOfMissingNumberInDic = 0; indexOfMissingNumberInDic < optionsOfMissingNumbersInRowOrCol.Keys.Count; indexOfMissingNumberInDic++)
+            return (firstIndexsesList.ElementAt(0) == secondIndexsesList.ElementAt(0)) && (firstIndexsesList.ElementAt(1) == secondIndexsesList.ElementAt(1));
+        }
+
+        private int placeInGroupOptionalPairsIndexes(List<List<int>> groupOptionalPairsIndexes, List<int> indexsesList)
+        {
+            for(int optionalPairsIndex =0; optionalPairsIndex < groupOptionalPairsIndexes.Count; optionalPairsIndex++)
+                if (compareListsOfIndexes(indexsesList, groupOptionalPairsIndexes.ElementAt(optionalPairsIndex)))
+                    return optionalPairsIndex;
+            return - 1;
+        }
+        private bool findPairsAndDeleteTheirOtherOptions(bool col, int rowOrColInBoard)
+        {
+            Dictionary<int, List<int>> groupOptionalPairsNumbers = findSubsets();
+            bool findAPair = false;
+            foreach(int key in groupOptionalPairsNumbers.Keys)
             {
-                int MissingNumberInDic = optionsOfMissingNumbersInRowOrCol.Keys.ElementAt(indexOfMissingNumberInDic);
-                if(isNumberHasOnePlaceInRowOrCo(col, MissingNumberInDic, rowOrColInBoard, optionsOfMissingNumbersInRowOrCol))
+                if(groupOptionalPairsNumbers[key].Count == 2)
+                {
+                    int firstPairNumber = groupOptionalPairsNumbers[key].ElementAt(0);
+                    int secondPairNumber = groupOptionalPairsNumbers[key].ElementAt(1);
+
+                    int firstIndexInBoard = placesOfNumbers[firstPairNumber].ElementAt(0);
+                    int firstCubeNumber = getCubeNumberByIndex(firstIndexInBoard);
+                    int secondIndexInBoard = placesOfNumbers[firstPairNumber].ElementAt(1);
+                    int secondCubeNumber = getCubeNumberByIndex(secondIndexInBoard);
+
+                    if(board[firstCubeNumber].leaveOnlyThePairNumbers(getIndexInCubeByIndexInBoard(firstIndexInBoard), firstPairNumber, secondPairNumber) ||
+                    board[secondCubeNumber].leaveOnlyThePairNumbers(getIndexInCubeByIndexInBoard(secondIndexInBoard), firstPairNumber, secondPairNumber))
+                        findAPair = true;
+
+                    // for cube
+                        //for (int rowOrColInCube = 0; rowOrColInCube < SqrtOfSizeOfBoard; rowOrColInCube++)
+                        //{
+                        //    if (rowOrColInCube != getRowOrColInCubeByIndexInBoard(firstIndexInBoard, col))
+                        //    {
+                        //        board[firstCubeNumber].deleteNumberFromRowOrColInCube(col, rowOrColInCube, firstPairNumber);
+                        //        board[firstCubeNumber].deleteNumberFromRowOrColInCube(col, rowOrColInCube, secondPairNumber);
+
+                        //        if (secondCubeNumber != firstCubeNumber)
+                        //        {
+                        //            board[secondCubeNumber].deleteNumberFromRowOrColInCube(col, rowOrColInCube, firstPairNumber);
+                        //            board[secondCubeNumber].deleteNumberFromRowOrColInCube(col, rowOrColInCube, secondPairNumber);
+                        //        }
+                        //    }
+                        //}
+                }
+                else
+                {
+                    if (groupOptionalPairsNumbers[key].Count > 2)
+                    {
+                        // it is taking to match time to check for trios,quatrets and more... so 
+                        // they will get the excption message (if the board is unsolvable) in the backtracking
+
+                        //excption - the indexes in groupOptionalPairsIndexes.ElementAt(key) cant contain all the numbers in groupOptionalPairsNumbers[key]
+                    }
+                }
+            }
+            return findAPair;
+
+        }
+        private Dictionary<int, List<int>> findSubsets()
+        {
+            // sorts 'placesOfNumbers' by value - by the length of the list
+            StaticMethods.SortByValue(placesOfNumbers);
+            List<List<int>> groupOptionalPairsIndexes = new List<List<int>>();
+            Dictionary<int, List<int>> groupOptionalPairsNumbers = new Dictionary<int, List<int>>();
+            int indexOfMissingNumber = 0;
+            int sizeOfPlacesOfNumbers = placesOfNumbers.Count;
+            bool findAPair = false;
+            while (indexOfMissingNumber < sizeOfPlacesOfNumbers && placesOfNumbers.Values.ElementAt(indexOfMissingNumber).Count == 2)
+            {
+                int indexInGroupOptionalPairsIndexes = placeInGroupOptionalPairsIndexes(groupOptionalPairsIndexes, placesOfNumbers.Values.ElementAt(indexOfMissingNumber));
+                if (indexInGroupOptionalPairsIndexes != -1)
+                {
+                    groupOptionalPairsNumbers[indexInGroupOptionalPairsIndexes].Add(placesOfNumbers.Keys.ElementAt(indexOfMissingNumber));
+                }
+                else
+                {
+                    groupOptionalPairsNumbers.Add(groupOptionalPairsIndexes.Count, new List<int>());
+                    groupOptionalPairsNumbers[groupOptionalPairsIndexes.Count].Add(placesOfNumbers.Keys.ElementAt(indexOfMissingNumber));
+                    groupOptionalPairsIndexes.Add(placesOfNumbers.Values.ElementAt(indexOfMissingNumber));
+                }
+                indexOfMissingNumber++;
+            }
+            return groupOptionalPairsNumbers; 
+        }
+        private bool hiddenSubsets(bool col, int rowOrColInBoard)
+        {
+            int numbersOfLopps = -1;
+            do
+            {
+                numbersOfLopps++;
+                InitializePlacesOfNumbers();
+                initializePlacesOfNumbersWithOptions(col, rowOrColInBoard);
+            } while (findPairsAndDeleteTheirOtherOptions(col, rowOrColInBoard));
+            return numbersOfLopps > 0;
+        }
+
+
+        //private bool compareListsOfIndexes(List<int> firstIndexsesList, List<int> secondIndexsesList)
+        //{
+        //    return (firstIndexsesList.ElementAt(0) == secondIndexsesList.ElementAt(0)) && (firstIndexsesList.ElementAt(1) == secondIndexsesList.ElementAt(1));
+        //}
+
+        //private int placeInGroupOptionalPairsIndexes(int startOfCountTwo, List<int> indexsesList)
+        //{
+        //    while (!compareListsOfIndexes(placesOfNumbers.Values.ElementAt(startOfCountTwo), indexsesList))
+        //    {
+        //        startOfCountTwo++;
+        //    }
+        //    return startOfCountTwo;
+        //}
+        //private void findPairsAndDeleteTheirOtherOptions()
+        //{
+        //    // sorts 'placesOfNumbers' by value - by the length of the list
+        //    StaticMethods.SortByValue(placesOfNumbers);
+
+        //    List<List<int>> groupOptionalPairsNumbers = new List<List<int>>();
+        //    int sizeOfPlacesOfNumbers = placesOfNumbers.Count;
+        //    int indexOfMissingNumber = 0;
+        //    while (indexOfMissingNumber < sizeOfPlacesOfNumbers && placesOfNumbers.Values.ElementAt(indexOfMissingNumber).Count < 2)
+        //    {
+        //        indexOfMissingNumber++;
+        //    }
+        //    int startOfCountTwo = indexOfMissingNumber;
+        //    while (indexOfMissingNumber < sizeOfPlacesOfNumbers && placesOfNumbers.Values.ElementAt(indexOfMissingNumber).Count == 2)
+        //    {
+        //        int indexInGroupOptionalPairsIndexes = placeInGroupOptionalPairsIndexes(startOfCountTwo, placesOfNumbers.Values.ElementAt(indexOfMissingNumber));
+        //        if (indexInGroupOptionalPairsIndexes != indexOfMissingNumber)
+        //        {
+        //            groupOptionalPairsNumbers[indexInGroupOptionalPairsIndexes].Add(placesOfNumbers.Keys.ElementAt(indexOfMissingNumber));
+        //        }
+        //        else
+        //        {
+        //            groupOptionalPairsNumbers.Add(new List<int>());
+        //            groupOptionalPairsNumbers.ElementAt(groupOptionalPairsNumbers.Count - 1).Add(placesOfNumbers.Keys.ElementAt(indexOfMissingNumber));
+        //        }
+        //        indexOfMissingNumber++;
+        //    }
+        //    foreach (int key in groupOptionalPairsNumbers.Keys)
+        //    {
+        //        if (groupOptionalPairsNumbers[key].Count == 2)
+        //        {
+        //            groupOptionalPairsIndexes.ElementAt(key)
+        //        }
+        //        else
+        //        {
+        //            if (groupOptionalPairsNumbers[key].Count > 2)
+        //            {
+
+        //            }
+        //        }
+        //    }
+
+        //    //for (int indexOfMissingNumber = 0; indexOfMissingNumber < placesOfNumbers.Keys.Count; indexOfMissingNumber++)
+        //    //{
+        //    //    int MissingNumberInDic = placesOfNumbers.Keys.ElementAt(indexOfMissingNumber);
+        //    //    if (placesOfNumbers[MissingNumberInDic].Count == group)
+        //    //    {
+        //    //        if ((group = placesOfNumbers[MissingNumberInDic].Count) > SqrtOfSizeOfBoard)
+        //    //            break;
+
+
+
+        //    //    }
+        //    //}
+
+
+        //    //    for (int indexOfMissingNumber = 0; indexOfMissingNumber < placesOfNumbers.Keys.Count; indexOfMissingNumber++)
+        //    //{
+        //    //    int MissingNumberInDic = placesOfNumbers.Keys.ElementAt(indexOfMissingNumber);
+        //    //    if (placesOfNumbers[MissingNumberInDic].Count >= group) {
+        //    //        if ((group = placesOfNumbers[MissingNumberInDic].Count) > SqrtOfSizeOfBoard)
+        //    //            break;
+        //    //        for (int indexOfNextMissingNumber = indexOfMissingNumber + 1; indexOfNextMissingNumber < placesOfNumbers.Keys.Count; indexOfNextMissingNumber++)
+        //    //        {
+        //    //            int NextMissingNumberInDic = placesOfNumbers.Keys.ElementAt(indexOfNextMissingNumber);
+        //    //            if (placesOfNumbers[NextMissingNumberInDic].Count == group)
+        //    //            {
+        //    //                if (compareIndexesOfNumbers(placesOfNumbers[MissingNumberInDic], placesOfNumbers[NextMissingNumberInDic]))
+        //    //                {
+
+        //    //                }
+        //    //            }
+        //    //            else
+        //    //            {
+        //    //                break;
+        //    //            }
+        //    //        }
+        //    //    }
+        //    //}
+
+
+        //}
+        public void checkplacesOfNumbers(bool col, int rowOrColInCube )
+        {
+            for (int indexOfMissingNumberInDic = 0; indexOfMissingNumberInDic < placesOfNumbers.Keys.Count; indexOfMissingNumberInDic++)
+            {
+                int MissingNumberInDic = placesOfNumbers.Keys.ElementAt(indexOfMissingNumberInDic);
+                if(isNumberHasOnePlaceInRowOrCol(col, MissingNumberInDic, rowOrColInCube))
                     indexOfMissingNumberInDic = -1;
             }
         }
+
+        private void initializePlacesOfNumbersWithOptions(bool col,int rowOrColInBoard)
+        {
+            // The dictionary placesOfNumbers contains after this for below 
+            // keys of optional numbers in the row or col (rowOrColInBoard) and for each optional 
+            // number it contains an indexes list of where the optional number can be located
+            int[] forParams = StaticMethods.forParameters(rowOrColInBoard / SqrtOfSizeOfBoard, col, SqrtOfSizeOfBoard);
+            for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
+                board[forParams[1]].checksOptionsOfARowOrAColInCube(col, rowOrColInBoard % SqrtOfSizeOfBoard);
+        }
+
+
         private void secondStepOfSolving(bool col)
         {
-
-            Dictionary<int, List<int>> optionsOfMissingNumbersInRowOrCol = new Dictionary<int, List<int>>();
-            InitializeADictionaryOfNumbersInBoard(optionsOfMissingNumbersInRowOrCol);
             for (int rowOrColInBoard =0; rowOrColInBoard < sizeOfBoard; rowOrColInBoard++) 
             {
-                // The dictionary optionsOfMissingNumbersInRowOrCol contains after this for below 
-                // keys of optional numbers in the row or col (rowOrColInBoard) and for each optional 
-                // number it contains an indexes list of where the optional number is located
-                int[] forParams = StaticMethods.forParameters(rowOrColInBoard/ SqrtOfSizeOfBoard, col, SqrtOfSizeOfBoard);
-                for (; forParams[1] < forParams[2]; forParams[1] += forParams[0]) 
-                    board[forParams[1]].checksOptionsOfARowOrAColInCube(col, rowOrColInBoard% SqrtOfSizeOfBoard, optionsOfMissingNumbersInRowOrCol);
-                checkOptionsOfMissingNumbersInRowOrCol(col, rowOrColInBoard, optionsOfMissingNumbersInRowOrCol);
-                InitializeADictionaryOfNumbersInBoard(optionsOfMissingNumbersInRowOrCol);
-
-               // print();
+                hiddenSubsets(col, rowOrColInBoard);
+                hiddenSubsets(col, rowOrColInBoard);
+                checkplacesOfNumbers(col, rowOrColInBoard % SqrtOfSizeOfBoard);
             }
         }
         private void BoardIntegrityOfRowOrCol(bool col, List<int> CountNumberInRowAndCol,int RowOrColOfCube, int RowOrColInCube)
@@ -401,7 +626,8 @@ namespace SudokuSolver
 
             firstStepOfSolving();
             knownNumbersNotInBoard = null;
-
+            Console.WriteLine("after firstStepOfSolving:");
+            print();
             int howManySolvedCells = countHowManySolvedCells();
             if (howManySolvedCells == sizeOfBoard * sizeOfBoard)
             {
@@ -410,14 +636,34 @@ namespace SudokuSolver
             }
             Console.WriteLine("did not solve");
 
-            print();
+            // do a loop until you dont find more!
+            step = 2;
 
             secondStepOfSolving(true);
-
+            Console.WriteLine("after secondStepOfSolving(true):");
             print();
 
             secondStepOfSolving(false);
+            Console.WriteLine("after secondStepOfSolving(false):");
+            print();
 
+            secondStepOfSolving(true);
+            Console.WriteLine("after secondStepOfSolving(true):");
+            print();
+
+            secondStepOfSolving(false);
+            Console.WriteLine("after secondStepOfSolving(false):");
+            print();
+
+            secondStepOfSolving(true);
+            Console.WriteLine("after secondStepOfSolving(true):");
+            print();
+
+            secondStepOfSolving(false);
+            Console.WriteLine("after secondStepOfSolving(false):");
+            print();
+
+            Console.WriteLine("after secondStepOfSolving:");
         }
 
     }

@@ -13,6 +13,7 @@ namespace SudokuSolver
         int SqrtOfSizeOfBoard { get; }
 
         KnownNumbersNotInBoard knownNumbersNotInBoard { get; set; }
+        int step { get; set; }
         void print();
         void Solve();
         bool isPossibleIndexToNumber(int indexOfNumberInBoard, int indexOfNumberInCube, int number);

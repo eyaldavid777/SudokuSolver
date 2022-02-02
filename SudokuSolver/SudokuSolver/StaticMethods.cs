@@ -29,14 +29,14 @@ namespace SudokuSolver
                 Console.ForegroundColor = ConsoleColor.DarkBlue;
             if (col)
                 if (withSpaces)
-                    System.Console.Write("       |");
+                    System.Console.Write("   |");
                 else
                     System.Console.Write("|");
             else
                  if (withSpaces)
-                System.Console.Write(" _______");
+                    System.Console.Write(" ___");
             else
-                System.Console.Write("_______");
+                System.Console.Write("___");
             if (DarkBlue)
                 Console.ForegroundColor = ConsoleColor.White;
         }
@@ -60,5 +60,7 @@ namespace SudokuSolver
             // sorts 'dict' by value - by the length of the list
             dict = dict.OrderByDescending(x => x.Value.Count).ToDictionary(x => x.Key, x => x.Value);
         }
+
+
     }
 }

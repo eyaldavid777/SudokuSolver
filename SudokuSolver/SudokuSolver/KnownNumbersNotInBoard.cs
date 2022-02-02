@@ -8,10 +8,10 @@ namespace SudokuSolver
 {
     class KnownNumbersNotInBoard
     {
-         public Dictionary<int, List<int>> numbersInRows;
-         public Dictionary<int, List<int>> numbersInCols;
+        public Dictionary<int, List<int>> numbersInRows { get; set; }
+         public Dictionary<int, List<int>> numbersInCols { get; set; }
 
-    
+
         public KnownNumbersNotInBoard()
         {
             numbersInRows = new Dictionary<int, List<int>>();

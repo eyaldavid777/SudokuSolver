@@ -26,10 +26,12 @@ namespace SudokuSolver
 
         int countHowManySolvedCells();
 
-        void checksOptionsOfARowOrAColInCube(bool col, int rowOrColInCube, Dictionary<int, List<int>> optionsOfMissingNumbersInRowOrCol);
+        void checksOptionsOfARowOrAColInCube(bool col, int rowOrColInCube);
 
-        void deleteNumberFromCube(int number, Dictionary<int, List<int>> optionsOfMissingNumbersInRowOrCol);
+        void deleteNumberFromCube(int number, bool col, int rowOrColInCube);
 
         List<int> getOptionalNumbers(int indexInCube); //////////////////
+
+        bool leaveOnlyThePairNumbers(int indexInCube, int firstPairNumbers, int secondPairNumbers);
     }
 }
