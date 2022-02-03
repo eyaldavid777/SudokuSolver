@@ -41,12 +41,7 @@ namespace SudokuSolver
                 Console.ForegroundColor = ConsoleColor.White;
         }
 
-        public static int getRowOcCol(bool col,int number1,int number2)
-        {
-            if (col)
-                return number1 % number2;
-            return number1 / number2;
-        }
+
 
         public static bool isInt(double number)
         {
@@ -55,11 +50,18 @@ namespace SudokuSolver
             return false;
         }
 
-        public static void SortByValue(Dictionary<int, List<int>> dict)
+        public static Dictionary<int, List<int>> sortByValue(Dictionary<int, List<int>> dict)
         {
             // sorts 'dict' by value - by the length of the list
-            dict = dict.OrderByDescending(x => x.Value.Count).ToDictionary(x => x.Key, x => x.Value);
+            return dict.OrderBy(x => x.Value.Count).ToDictionary(x => x.Key, x => x.Value);
         }
+
+        public static Dictionary<int, List<int>> sortByValueDescending(Dictionary<int, List<int>> dict)
+        {
+            // sorts 'dict' by value - by the length of the list 
+            return dict.OrderByDescending(x => x.Value.Count).ToDictionary(x => x.Key, x => x.Value);
+        }
+
 
 
     }

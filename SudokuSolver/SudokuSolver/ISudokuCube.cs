@@ -28,10 +28,14 @@ namespace SudokuSolver
 
         void checksOptionsOfARowOrAColInCube(bool col, int rowOrColInCube);
 
-        void deleteNumberFromCube(int number, bool col, int rowOrColInCube);
+        void deleteNumberFromCube(int number, List<int> PlacesNotToDelete);
 
         List<int> getOptionalNumbers(int indexInCube); //////////////////
 
-        bool leaveOnlyThePairNumbers(int indexInCube, int firstPairNumbers, int secondPairNumbers);
+        bool nakedSingleOfACube();
+
+        void initializePlacesOfNumbersFromCube();
+
+        bool leaveInCellOnlyTheListOptions(int indexInCube, List<int> options);
     }
 }

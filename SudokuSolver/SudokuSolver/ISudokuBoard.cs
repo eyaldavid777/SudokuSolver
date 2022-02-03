@@ -9,14 +9,27 @@ namespace SudokuSolver
     interface ISudokuBoard 
     {
         Dictionary<int, List<int>> placesOfNumbers { get; set; }
+        KnownNumbersNotInBoard knownNumbersNotInBoard { get; set; }
+
+        ISudokuCube[] board { get; }
         int sizeOfBoard { get; }
         int SqrtOfSizeOfBoard { get; }
-
-        KnownNumbersNotInBoard knownNumbersNotInBoard { get; set; }
         int step { get; set; }
         void print();
-        void Solve();
+
+        void checkNumberOfOptions(List<int> optionsInCubeByBoardIndex, int mostCommonNumber);
+
+        bool repetition(Board.Ptr repetitionContent);
         bool isPossibleIndexToNumber(int indexOfNumberInBoard, int indexOfNumberInCube, int number);
+
+        void InitializePlacesOfNumbers();
+
+        void initializePlacesOfNumbersFromRowOrCol(bool col, int rowOrColInBoard);
+
+        bool checkplacesOfNumbers(bool col, int rowOrColInCube);
+
+
+        bool isTheCubeWorthChecking(int cubeNumber, int mostCommonNumber);
 
         void deleteNumberFromRowOrCol(bool col, int indexOfNumberInBoard, int indexOfNumberInCube, int number);
 

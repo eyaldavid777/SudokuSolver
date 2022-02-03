@@ -18,7 +18,7 @@ namespace SudokuSolver
             cubeNumber = numOfCube;
             cube = new ICell[inBoard.sizeOfBoard];
             Initialize(cubeNumbers);
-        } 
+        }
         private void Initialize(String numbersInBoard)
         {
             for (int indexInCube = 0; indexInCube < cube.Length; indexInCube++)
@@ -46,14 +46,34 @@ namespace SudokuSolver
                 {
                     char number = (char)(cube[rowInCube * inBoard.SqrtOfSizeOfBoard + colInCube].number + '0');
                     System.Console.Write(" {0} ", number);
-                    StaticMethods.printAColOrCol(true, withDarkBlue, false); 
+                    StaticMethods.printAColOrCol(true, withDarkBlue, false);
                 }
                 else
                     StaticMethods.printAColOrCol(true, withDarkBlue, true);
             }
             Console.ForegroundColor = ConsoleColor.White;
         }
-        public List<int> fillOptionsInCube(int number,bool checkTheOptions)
+
+        public void initializePlacesOfNumbersFromCube()
+        {
+            // The dictionary placesOfNumbers contains after this for below 
+            // keys of optional numbers in the cube (cubeNumber) and for each optional 
+            // number it contains an indexes list of where the optional number can be located
+            for(int indexInCube =0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
+            {
+                if (cube[indexInCube].isSolved())
+                {
+                    // if the cell is solved remove the number in it from inBoard.placesOfNumbers
+                    // because the cube contains it (the number) so we dont need to look at this place optional numbers
+                    inBoard.placesOfNumbers.Remove(cube[indexInCube].number);
+                }
+                else
+                {
+                    copyOptionsInIndex(indexInCube);
+                }
+            }
+        }
+        public List<int> fillOptionsInCube(int number, bool checkTheOptions)
         {
             List<int> optionsInCubeByBoardIndex = new List<int>();
             for (int indexInCube = 0; indexInCube < cube.Length; indexInCube++)
@@ -67,7 +87,8 @@ namespace SudokuSolver
             }
             return optionsInCubeByBoardIndex;
         }
-        private bool isNumberInRowOrColInCubeFor(int addToIndexInCube,int indexInCube, int endOfColOrRow, int number)
+
+        private bool isNumberInRowOrColInCubeFor(int addToIndexInCube, int indexInCube, int endOfColOrRow, int number)
         {
             for (; indexInCube < endOfColOrRow; indexInCube += addToIndexInCube)
             {
@@ -84,6 +105,7 @@ namespace SudokuSolver
                 return true;
             return false;
         }
+
         public bool isRowOrColFull(bool col, int colOrRowIndexInCube)
         {
             int[] forParams = StaticMethods.forParameters(colOrRowIndexInCube, col, inBoard.SqrtOfSizeOfBoard);
@@ -92,6 +114,7 @@ namespace SudokuSolver
                     return false;
             return true;
         }
+
         private void isNumberHasOnePlaceInCube(int number)
         {
             List<int> countNumberInCube = new List<int>();
@@ -99,18 +122,14 @@ namespace SudokuSolver
                 if (!cube[indexInCube].isSolved())
                 {
                     if (cube[indexInCube].optionalNumbers.Contains(number))
-                        countNumberInCube.Add(indexInCube);
+                        countNumberInCube.Add(indexInBoard(indexInCube));
                 }
                 else
                     if (cube[indexInCube].number == number)
                         return;
-            if (countNumberInCube.Count == 1)
-                putTheNumberAndDeletOptions(countNumberInCube.ElementAt(0), number,true,true);
-            if (countNumberInCube.Count == 0)
-            {
-                // in the cube cubeNumber you can't put the number "number" (exception)
-            }
+            inBoard.checkNumberOfOptions(countNumberInCube, number);
         }
+
         public void deleteNumberFromRowOrColInCube(bool col, int colOrRowIndexInCube, int number)
         {
             int[] forParams = StaticMethods.forParameters(colOrRowIndexInCube, col, inBoard.SqrtOfSizeOfBoard);
@@ -123,49 +142,48 @@ namespace SudokuSolver
                 isNumberHasOnePlaceInCube(number);
         }
 
-        private void checkCountOfOptionsInIndex(int indexInCube, bool col,bool copy,int rowOrColInCube)
+        private bool checkCountOfOptionsInIndex(int indexInCube)
         {
+            bool foundNakedSingle = false;
             int countOfOptionalNumbers = cube[indexInCube].optionalNumbers.Count;
-            switch (countOfOptionalNumbers)
+            if (countOfOptionalNumbers == 0)
             {
-                case 0:
-                    // the cell at index indexInBoard(forParams[1]) cant contain a valid number (exception)
-                    break;
-                case 1:
-                    // knownNumber = the only option in the in the cell
-                    int knownNumber = cube[indexInCube].optionalNumbers[0];
-                    putTheNumberAndDeletOptions(indexInCube, knownNumber, true, true);
-                    deleteNumberFromCube(knownNumber, col, rowOrColInCube);
-                    // remove from inBoard.placesOfNumbers the 'knownNumber' that you found if it's at the same 'rowOrColInCube'
-                    if (StaticMethods.getRowOcCol(col, indexInCube, inBoard.SqrtOfSizeOfBoard) == rowOrColInCube)
-                        inBoard.placesOfNumbers.Remove(knownNumber);
-                    break;
-                default:
-                    if (copy)
-                    {
-                        // copy all the optional numbers to the dictionary inBoard.placesOfNumbers
-                        // the key is an optional number and the value is the indexes list of where the optional number is located
-                        for (int indexOfAnOption = 0; indexOfAnOption < countOfOptionalNumbers; indexOfAnOption++)
-                            inBoard.placesOfNumbers[cube[indexInCube].optionalNumbers.ElementAt(indexOfAnOption)].Add(cube[indexInCube].index);
-                    }
-                    break;
+                // the cell at index indexInBoard(forParams[1]) cant contain a valid number (exception)
             }
+            if (countOfOptionalNumbers == 1)
+            {
+                foundNakedSingle = true;
+                // knownNumber = the only option in the in the cell
+                int knownNumber = cube[indexInCube].optionalNumbers[0];
+                putTheNumberAndDeletOptions(indexInCube, knownNumber, true, true);
+                deleteNumberFromCube(knownNumber,new List<int>());
+            }
+            return foundNakedSingle;
         }
-       
-      
-        public void deleteNumberFromCube(int number, bool col,int rowOrColInCube)
+
+        public bool nakedSingleOfACube()
+        {
+            bool theBoardHasChanged = false;
+            for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
+            {
+                if(!cube[indexInCube].isSolved())
+                    if (checkCountOfOptionsInIndex(indexInCube))
+                        theBoardHasChanged = true;
+            }
+            return theBoardHasChanged;
+        }
+
+        public void deleteNumberFromCube(int number, List<int> PlacesNotToDelete)
         {
             //deleteNumberFromCube(MissingNumberInDic, inBoard.placesOfNumbers,col, rowOrColInCube)
             // this function accurs only after each empty cell in the board contains all its options 
-            for (int indexInCube=0; indexInCube< inBoard.sizeOfBoard; indexInCube++)
+            for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
                 if (!cube[indexInCube].isSolved())
-                    if (cube[indexInCube].optionalNumbers.Remove(number))
-                    {
-                        //if you removed the number from indexInCube:
-                        checkCountOfOptionsInIndex(indexInCube, col, false, rowOrColInCube);
-                    }
+                    if (!PlacesNotToDelete.Contains(indexInCube))
+                        cube[indexInCube].optionalNumbers.Remove(number);
         }
-        public void putTheNumberAndDeletOptions(int indexInCube, int knownNumber,bool deletFromRow, bool deletFromCol)
+
+        public void putTheNumberAndDeletOptions(int indexInCube, int knownNumber, bool deletFromRow, bool deletFromCol)
         {
             List<int> optionalNumbersOfPlace = cube[indexInCube].optionalNumbers;
             cube[indexInCube].solvedTheCell(knownNumber);
@@ -174,12 +192,13 @@ namespace SudokuSolver
             foreach (int number in optionalNumbersOfPlace)
                 isNumberHasOnePlaceInCube(number);
 
-            if(deletFromCol)
-                inBoard.deleteNumberFromRowOrCol(true,cube[indexInCube].index, indexInCube, knownNumber);
+            if (deletFromCol)
+                inBoard.deleteNumberFromRowOrCol(true, cube[indexInCube].index, indexInCube, knownNumber);
             if (deletFromRow)
                 inBoard.deleteNumberFromRowOrCol(false, cube[indexInCube].index, indexInCube, knownNumber);
         }
-        public void rowOrColIntegrity(bool col,int rowOrColInCube, int rowOrColOfCube, List<int> CountNumberInRowAndCol)
+
+        public void rowOrColIntegrity(bool col, int rowOrColInCube, int rowOrColOfCube, List<int> CountNumberInRowAndCol)
         {
             int[] forParams = StaticMethods.forParameters(rowOrColInCube, col, inBoard.SqrtOfSizeOfBoard);
             for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
@@ -194,22 +213,24 @@ namespace SudokuSolver
                             rowOrCol = "col";
                         else
                             rowOrCol = "row";
-                        throw new SameNumberInARowOrColException("The number " + numberInCell + " appears more than once in the " + rowOrCol + " "+ rowOrColInBoard);
-                    }                       
-                    CountNumberInRowAndCol.Add(numberInCell);                 
-                }             
+                        throw new SameNumberInARowOrColException("The number " + numberInCell + " appears more than once in the " + rowOrCol + " " + rowOrColInBoard);
+                    }
+                    CountNumberInRowAndCol.Add(numberInCell);
+                }
         }
 
-        public void cubeIntegrity(List<int> CountNumberInRowAndCol) {
+        public void cubeIntegrity(List<int> CountNumberInRowAndCol)
+        {
             for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
                 if (cube[indexInCube].isSolved())
                 {
                     int numberInCell = cube[indexInCube].number;
                     if (CountNumberInRowAndCol.Contains(numberInCell))
-                        throw new SameNumberInACubeException("The number " + numberInCell + " appears more than once in the cube "+ cubeNumber);
+                        throw new SameNumberInACubeException("The number " + numberInCell + " appears more than once in the cube " + cubeNumber);
                     CountNumberInRowAndCol.Add(numberInCell);
                 }
         }
+
         public int countHowManySolvedCells()
         {
             int count = 0;
@@ -221,6 +242,15 @@ namespace SudokuSolver
             return count;
         }
 
+        private void copyOptionsInIndex(int indexInCube)
+        {
+            int countOfOptionalNumbers = cube[indexInCube].optionalNumbers.Count;
+            // copy all the optional numbers to the dictionary inBoard.placesOfNumbers
+            // the key is an optional number and the value is the indexes list of where the optional number is located
+            for (int indexOfAnOption = 0; indexOfAnOption < countOfOptionalNumbers; indexOfAnOption++)
+                inBoard.placesOfNumbers[cube[indexInCube].optionalNumbers.ElementAt(indexOfAnOption)].Add(cube[indexInCube].index);
+        }
+
         public void checksOptionsOfARowOrAColInCube(bool col, int rowOrColInCube)
         {
             int[] forParams = StaticMethods.forParameters(rowOrColInCube, col, inBoard.SqrtOfSizeOfBoard);
@@ -230,10 +260,10 @@ namespace SudokuSolver
                 {
                     // if the cell is solved remove the number in it from inBoard.placesOfNumbers
                     // because the row or col contains it (the number) so we dont need to look at this place optional numbers
-                   inBoard.placesOfNumbers.Remove(cube[forParams[1]].number);
+                    inBoard.placesOfNumbers.Remove(cube[forParams[1]].number);
                 }
                 else
-                    checkCountOfOptionsInIndex(forParams[1], col, true, rowOrColInCube);                   
+                    copyOptionsInIndex(forParams[1]);
             }
         }
 
@@ -249,6 +279,25 @@ namespace SudokuSolver
             cube[indexInCube].optionalNumbers.Clear();
             cube[indexInCube].optionalNumbers.Add(firstPairNumbers);
             cube[indexInCube].optionalNumbers.Add(secondPairNumbers);
+            return true;
+        }
+
+        public bool leaveInCellOnlyTheListOptions(int indexInCube,List<int> remainingOptions)
+        {
+            if (remainingOptions.Count == 1)
+            {
+                cube[indexInCube].optionalNumbers.Clear();
+                cube[indexInCube].optionalNumbers.Add(remainingOptions.ElementAt(0));
+                return true;
+            }
+            if (cube[indexInCube].optionalNumbers.Count == 2)
+            {
+                //the cell already has only two options so you dont need to change it
+                return false;
+            }
+            cube[indexInCube].optionalNumbers.Clear();
+            cube[indexInCube].optionalNumbers.Add(remainingOptions.ElementAt(0));
+            cube[indexInCube].optionalNumbers.Add(remainingOptions.ElementAt(1));
             return true;
         }
     }
