@@ -10,42 +10,38 @@ namespace SudokuSolver
     {
 
         public ISudokuBoard sudokuBoard { get; set; }
+        public List<int> emptyCellsIndexes { get; set; }
 
         public Solver(ISudokuBoard SudokuBoard)
         {
             sudokuBoard = SudokuBoard;
+            emptyCellsIndexes = new List<int>();
         }
         public void Solve()
         {
-
             firstStepOfSolving();
-            Console.WriteLine("after firstStepOfSolving:");
-            sudokuBoard.print();
-
             sudokuBoard.step = 2;
-            int howManySolvedCells = countHowManySolvedCells();
-            if (howManySolvedCells == sudokuBoard.sizeOfBoard * sudokuBoard.sizeOfBoard)
-            {
-                Console.WriteLine("solved");
-                //return;
-            }
-            else
-            {
-                Console.WriteLine("did not solve");
-            }
-
-
             secondStepOfSolving();
-            Console.WriteLine("after secondStepOfSolving:");
-            sudokuBoard.print();
-            Console.WriteLine("end");
-
-
-            //// do a loop until you dont find more!
-
+            sudokuBoard.step = 3;
+            thirdStepOfSolving(sudokuBoard);
         }
 
-        private int countHowManySolvedCells()
+        public void copyFrom(Board src, Board des)
+        {
+            for (int indexOfCube = 0; indexOfCube < sudokuBoard.sizeOfBoard; indexOfCube++)
+                for (int indexInCube = 0; indexInCube < sudokuBoard.sizeOfBoard; indexInCube++)
+                        des.board[indexOfCube].getCell(indexInCube).solvedTheCell(src.board[indexOfCube].getCell(indexInCube).number);
+        }
+        private void copyEmptyCellsOptions(Board src, Board des)
+        {
+            foreach(int emptyCellIndexe in emptyCellsIndexes)
+            {
+                int cubeOfCell = Calculations.getCubeNumberByIndex(emptyCellIndexe, sudokuBoard.sizeOfBoard);
+                int indexOfCellInCube = Calculations.getIndexInCubeByIndexInBoard(emptyCellIndexe, sudokuBoard.sizeOfBoard);
+                des.board[cubeOfCell].leaveInCellOnlyTheListOptions(indexOfCellInCube, src.board[cubeOfCell].getOptionalNumbers(indexOfCellInCube));
+            }
+        }
+        public int countHowManySolvedCells()
         {
             int count = 0;
             for (int indexOfCube = 0; indexOfCube < sudokuBoard.sizeOfBoard; indexOfCube++)
@@ -86,7 +82,7 @@ namespace SudokuSolver
             return false;
         }
 
-        private void secondStepOfSolving()
+        public void secondStepOfSolving()
         {
             bool doNakedSingle = true;
             bool doHiddneSubsets = true;
@@ -211,8 +207,8 @@ namespace SudokuSolver
                     remainingOptions.Add(firstPairNumber);
                     remainingOptions.Add(secondPairNumber);
 
-                    if (sudokuBoard.board[firstCubeNumber].leaveInCellOnlyTheListOptions(firstIndexInCube, remainingOptions) ||
-                    sudokuBoard.board[secondCubeNumber].leaveInCellOnlyTheListOptions(secondIndexInCube, remainingOptions))
+                    if (sudokuBoard.board[firstCubeNumber].leaveInCellOnlyThePairs(firstIndexInCube, remainingOptions) ||
+                    sudokuBoard.board[secondCubeNumber].leaveInCellOnlyThePairs(secondIndexInCube, remainingOptions))
                             findAPair = true;
 
                     if (type != Type.cube && firstCubeNumber == secondCubeNumber)
@@ -275,6 +271,71 @@ namespace SudokuSolver
         private bool compareListsOfIndexes(List<int> firstIndexsesList, List<int> secondIndexsesList)
         {
             return (firstIndexsesList.ElementAt(0) == secondIndexsesList.ElementAt(0)) && (firstIndexsesList.ElementAt(1) == secondIndexsesList.ElementAt(1));
+        }
+
+
+        private void thirdStepOfSolving(ISudokuBoard board)
+        {
+            ISudokuBoard solvedBoard = backTracking(sudokuBoard);
+            copyFrom((Board)solvedBoard, (Board)sudokuBoard);
+        }
+        public ISudokuBoard backTracking(ISudokuBoard board)
+        {
+            int cellWithLeastOptions = findUnSolvedCellWithLeastOptions();
+            if (cellWithLeastOptions == -1)
+            {
+                return board;
+            }
+
+            int cubeNumberOfCell = Calculations.getCubeNumberByIndex(cellWithLeastOptions, sudokuBoard.sizeOfBoard);
+            int indexInCubeOfCell = Calculations.getIndexInCubeByIndexInBoard(cellWithLeastOptions, sudokuBoard.sizeOfBoard);
+            List<int> optionsOfCell = sudokuBoard.board[cubeNumberOfCell].getOptionalNumbers(indexInCubeOfCell);
+            foreach (int option in optionsOfCell)
+            {
+                ISudokuBoard tryBoard = null;
+                try
+                {
+                    tryBoard = board.copyBoard();
+                    copyEmptyCellsOptions((Board)board, (Board)tryBoard);
+                    tryBoard.putKnownNumberAndDeletOptions(cellWithLeastOptions, option, true, true);
+                    tryBoard.board[Calculations.getCubeNumberByIndex(cellWithLeastOptions,sudokuBoard.sizeOfBoard)].deleteNumberFromCube(option, new List<int>());
+                    tryBoard.sudokuSolver.secondStepOfSolving();
+                    ISudokuBoard thirdStepOfSolvingBoard = tryBoard.sudokuSolver.backTracking(tryBoard);
+                    if (thirdStepOfSolvingBoard != null)
+                    {
+                        return thirdStepOfSolvingBoard;
+                    }
+                }
+                catch (SudokuExceptions s)
+                {
+                    // Console.WriteLine(s.Message);
+                    // tryBoard = (Board)board.Clone();
+                }
+            }
+            return null;
+        }
+        private int findUnSolvedCellWithLeastOptions()
+        {
+            int cellWithLeastOptions = -1;
+            int leastOptions = sudokuBoard.sizeOfBoard + 1;
+            foreach (int emptyCellIndexe in emptyCellsIndexes)
+            {
+                int cubeOfCell = Calculations.getCubeNumberByIndex(emptyCellIndexe, sudokuBoard.sizeOfBoard);
+                int indexOfCellInCube = Calculations.getIndexInCubeByIndexInBoard(emptyCellIndexe, sudokuBoard.sizeOfBoard);
+                int currentOptionsCount = -1;
+                if (!sudokuBoard.board[cubeOfCell].getCell(indexOfCellInCube).isSolved())
+                {
+                    currentOptionsCount = sudokuBoard.board[cubeOfCell].getOptionalNumbers(indexOfCellInCube).Count;
+                    if (currentOptionsCount == 2)
+                        return emptyCellIndexe;
+                    if (currentOptionsCount < leastOptions)
+                    {
+                        leastOptions = currentOptionsCount;
+                        cellWithLeastOptions = emptyCellIndexe;
+                    }
+                }
+            }
+            return cellWithLeastOptions;
         }
     }
 }

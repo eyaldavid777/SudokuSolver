@@ -15,6 +15,15 @@ namespace SudokuSolver
         int sizeOfBoard { get; }
         int SqrtOfSizeOfBoard { get; }
         int step { get; set; }
+
+        ISudokuSolver sudokuSolver { get; set; }
+
+        Board copyBoardWithNumber(int indexInBoard, char option);
+
+        void putKnownNumberAndDeletOptions(int indexInBoard, int mostCommonNumber, bool deletFromRow, bool deletFromCol);
+
+        Board copyBoard();
+
         void print();
 
         void checkNumberOfOptions(List<int> optionsInCubeByBoardIndex, int mostCommonNumber);

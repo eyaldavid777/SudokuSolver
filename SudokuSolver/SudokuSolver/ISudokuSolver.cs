@@ -9,5 +9,13 @@ namespace SudokuSolver
     interface ISudokuSolver
     {
         void Solve();
+
+        List<int> emptyCellsIndexes { get; set; }
+
+        int countHowManySolvedCells();
+
+        void secondStepOfSolving();
+
+        ISudokuBoard backTracking(ISudokuBoard board);
     }
 }

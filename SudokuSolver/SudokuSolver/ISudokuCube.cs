@@ -12,6 +12,11 @@ namespace SudokuSolver
 
         List<int> fillOptionsInCube(int number, bool checkTheOptions);
 
+        String rowOrCulIncubeString(bool col, int colOrRowIndex);
+
+
+        ICell getCell(int indexInCube);
+
         bool isNumberInRowOrColInCube(bool col, int colOrRowIndex, int number);
 
         bool isRowOrColFull(bool col, int colOrRowIndex);
@@ -30,12 +35,15 @@ namespace SudokuSolver
 
         void deleteNumberFromCube(int number, List<int> PlacesNotToDelete);
 
-        List<int> getOptionalNumbers(int indexInCube); //////////////////
+        List<int> getOptionalNumbers(int indexInCube); 
 
         bool nakedSingleOfACube();
 
         void initializePlacesOfNumbersFromCube();
 
-        bool leaveInCellOnlyTheListOptions(int indexInCube, List<int> options);
+        void leaveInCellOnlyTheListOptions(int indexInCube, List<int> options);
+
+        bool leaveInCellOnlyThePairs(int indexInCube, List<int> remainingOptions);
+
     }
 }

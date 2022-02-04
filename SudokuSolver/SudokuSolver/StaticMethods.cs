@@ -41,8 +41,6 @@ namespace SudokuSolver
                 Console.ForegroundColor = ConsoleColor.White;
         }
 
-
-
         public static bool isInt(double number)
         {
             if (number == Math.Truncate(number))

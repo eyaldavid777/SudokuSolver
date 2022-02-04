@@ -12,20 +12,23 @@ namespace SudokuSolver
 
         public ISudokuBoard inBoard { get; }
         public int cubeNumber { get; }
-        public Cube(String cubeNumbers, int numOfCube, ISudokuBoard InBoard)
+        public Cube(string cubeNumbers, int numOfCube, ISudokuBoard InBoard)
         {
             inBoard = InBoard;
             cubeNumber = numOfCube;
             cube = new ICell[inBoard.sizeOfBoard];
             Initialize(cubeNumbers);
         }
-        private void Initialize(String numbersInBoard)
+        private void Initialize(string numbersInBoard)
         {
             for (int indexInCube = 0; indexInCube < cube.Length; indexInCube++)
             {
                 int index = indexInBoard(indexInCube);
                 if (numbersInBoard[index] == '0')
+                {
+                    inBoard.sudokuSolver.emptyCellsIndexes.Add(index);
                     cube[indexInCube] = new Cell(index);
+                }
                 else
                     cube[indexInCube] = new Cell(inBoard.placesOfNumbers, numbersInBoard[index], index);
             }
@@ -73,6 +76,19 @@ namespace SudokuSolver
                 }
             }
         }
+
+        public string rowOrCulIncubeString(bool col, int colOrRowIndex)
+        {
+            string rowOrCulIncubeString = string.Empty;
+            int[] forParams = StaticMethods.forParameters(colOrRowIndex, col, inBoard.SqrtOfSizeOfBoard);
+            for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
+            {
+                char number = (char)(cube[forParams[1]].number + '0');
+                rowOrCulIncubeString += number;
+            }
+            return rowOrCulIncubeString;
+        }
+
         public List<int> fillOptionsInCube(int number, bool checkTheOptions)
         {
             List<int> optionsInCubeByBoardIndex = new List<int>();
@@ -196,6 +212,8 @@ namespace SudokuSolver
                 inBoard.deleteNumberFromRowOrCol(true, cube[indexInCube].index, indexInCube, knownNumber);
             if (deletFromRow)
                 inBoard.deleteNumberFromRowOrCol(false, cube[indexInCube].index, indexInCube, knownNumber);
+
+            inBoard.sudokuSolver.emptyCellsIndexes.Remove(cube[indexInCube].index);
         }
 
         public void rowOrColIntegrity(bool col, int rowOrColInCube, int rowOrColOfCube, List<int> CountNumberInRowAndCol)
@@ -282,14 +300,8 @@ namespace SudokuSolver
             return true;
         }
 
-        public bool leaveInCellOnlyTheListOptions(int indexInCube,List<int> remainingOptions)
-        {
-            if (remainingOptions.Count == 1)
-            {
-                cube[indexInCube].optionalNumbers.Clear();
-                cube[indexInCube].optionalNumbers.Add(remainingOptions.ElementAt(0));
-                return true;
-            }
+        public bool leaveInCellOnlyThePairs(int indexInCube,List<int> remainingOptions)
+        {           
             if (cube[indexInCube].optionalNumbers.Count == 2)
             {
                 //the cell already has only two options so you dont need to change it
@@ -299,6 +311,19 @@ namespace SudokuSolver
             cube[indexInCube].optionalNumbers.Add(remainingOptions.ElementAt(0));
             cube[indexInCube].optionalNumbers.Add(remainingOptions.ElementAt(1));
             return true;
+        }
+
+        public void leaveInCellOnlyTheListOptions(int indexInCube, List<int> remainingOptions)
+        {
+            cube[indexInCube].optionalNumbers.Clear();
+            foreach (int option in remainingOptions)
+            {
+                cube[indexInCube].optionalNumbers.Add(option);
+            }
+        }
+        public ICell getCell(int indexInCube)
+        {
+            return cube[indexInCube];
         }
     }
 }

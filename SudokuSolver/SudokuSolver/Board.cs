@@ -17,29 +17,40 @@ namespace SudokuSolver
         public KnownNumbersNotInBoard knownNumbersNotInBoard { get; set; }
         public int step { get; set; }
 
+        public ISudokuSolver sudokuSolver { get; set; }
+
         public delegate bool Ptr();
 
-        public Board(String numbersInBoard)
+        public Board(string numbersInBoard, int placeToChack = -1)
         {
             SizeOfBoardIntegrity(numbersInBoard);
-            sizeOfBoard = (int)Math.Sqrt(numbersInBoard.Length);
-            SqrtOfSizeOfBoard = (int)Math.Sqrt(sizeOfBoard);
+            sizeOfBoard = Calculations.Sqrt(numbersInBoard.Length);
+            SqrtOfSizeOfBoard = Calculations.Sqrt(sizeOfBoard);
+            sudokuSolver = new Solver(this);
             board = new Cube[sizeOfBoard];
             Initialize(numbersInBoard, 0);
-            BoardIntegrity();
+            if (placeToChack == -1)
+                BoardIntegrity();
         }
+
+
         public void SizeOfBoardIntegrity(string numbersInBoard)
         {
             double doubleSizeOfBoard = Math.Sqrt(numbersInBoard.Length);
             if (!StaticMethods.isInt(Math.Sqrt(doubleSizeOfBoard)))
                 throw new InvalidBoardSizeException();
         }
-        private void Initialize(String numbersInBoard, int index)
+        private void Initialize(string numbersInBoard, int index)
         {
             step = 1;
             placesOfNumbers = new Dictionary<int, List<int>>();
-            InitializePlacesOfNumbers();
             knownNumbersNotInBoard = new KnownNumbersNotInBoard();
+            InitializePlacesOfNumbers();
+            InitializeBorad(numbersInBoard);
+        }
+
+        public void InitializeBorad(string numbersInBoard)
+        {
             for (int numOfCube = 0; numOfCube < board.Length; numOfCube++)
             {
                 board[numOfCube] = new Cube(numbersInBoard, numOfCube, this);
@@ -65,6 +76,36 @@ namespace SudokuSolver
                 board[forParams[1]].checksOptionsOfARowOrAColInCube(col, rowOrColInBoard % SqrtOfSizeOfBoard);
         }
 
+        public Board copyBoardWithNumber(int indexInBoard,char option)
+        {          
+            string numbersInBoard = boardString();
+
+            StringBuilder temp = new StringBuilder(numbersInBoard);
+            temp[indexInBoard] = option; 
+            numbersInBoard = temp.ToString();
+
+            Board cloneBoard = new Board(numbersInBoard, indexInBoard);
+            return cloneBoard;
+        }
+        public Board copyBoard()
+        {
+            string numbersInBoard = boardString();
+            Board cloneBoard = new Board(numbersInBoard, 0);
+            return cloneBoard;
+        }
+        private string boardString()
+        {
+            string boardString = string.Empty;
+            for (int rowIndex =0; rowIndex < sizeOfBoard; rowIndex++)
+            {
+                for(int cubeCol =0; cubeCol < SqrtOfSizeOfBoard; cubeCol++)
+                {
+                    int cubeNumber = rowIndex / SqrtOfSizeOfBoard * SqrtOfSizeOfBoard + cubeCol;
+                    boardString += board[cubeNumber].rowOrCulIncubeString(false, rowIndex % SqrtOfSizeOfBoard);
+                }
+            }
+            return boardString;
+        }
         private void printALine()
         {
             System.Console.Write("   ");
@@ -134,7 +175,6 @@ namespace SudokuSolver
                             return true;
             return false;
         }
-
         private bool isNumberInRowOrColOfCubes(int cubeNumber, bool col, int colOrRowIndexInCube, int[] forParams, int number)
         {
             int colOrRowIndexInBoard = Calculations.getRowOrCol(col, cubeNumber, SqrtOfSizeOfBoard) * SqrtOfSizeOfBoard + colOrRowIndexInCube;
@@ -173,7 +213,7 @@ namespace SudokuSolver
                 if (forParams[1] != cubeNumber)
                     board[forParams[1]].deleteNumberFromRowOrColInCube(col, rowOrColInCube, number);
         }
-        private void putKnownNumberAndDeletOptions(int indexInBoard, int mostCommonNumber, bool deletFromRow, bool deletFromCol)
+        public void putKnownNumberAndDeletOptions(int indexInBoard, int mostCommonNumber, bool deletFromRow, bool deletFromCol)
         {
             int indexInCube = Calculations.getIndexInCubeByIndexInBoard(indexInBoard,sizeOfBoard);
             board[Calculations.getCubeNumberByIndex(indexInBoard, sizeOfBoard)].putTheNumberAndDeletOptions(indexInCube, mostCommonNumber, deletFromRow, deletFromCol);
@@ -184,10 +224,7 @@ namespace SudokuSolver
                 // add to mostCommonNumber in placesOfNumbers his new place
                 placesOfNumbers[mostCommonNumber].Add(indexInBoard);
             }
-
-            //זה פותר את הלוח ככה שזה מוחק את האופציה של מוסט קומון ואז פלאיסיס נאל
-        }
-   
+        }  
         private bool isNumberHasOnePlaceInRowOrCol(bool col, int MissingNumberInDic, int rowOrColInCube) // hidden single
         {
             // if MissingNumberInDic has only one place in rowOrColInBoard then
@@ -205,38 +242,6 @@ namespace SudokuSolver
                 remainingOptions.Add(MissingNumberInDic);
                 board[indexOfCube].leaveInCellOnlyTheListOptions(indexInCube, remainingOptions);
                 return true;
-
-
-                //// optionalNumbersOfPlace = save the options at index 'indexInBoard'
-                //List<int> optionalNumbersOfPlace = board[indexOfCube].getOptionalNumbers(indexInCube);
-                //// remove from optionalNumbersOfPlace the MissingNumberInDic that you found
-                //optionalNumbersOfPlace.Remove(MissingNumberInDic);
-                //putKnownNumberAndDeletOptions(indexInBoard, MissingNumberInDic, !col, col);
-                //// delete all the options of MissingNumberInDic from the cube we found it at
-                //board[indexOfCube].deleteNumberFromCube(MissingNumberInDic, new List<int>());
-                //// remove from placesOfNumbers the MissingNumberInDic that you found
-                //placesOfNumbers.Remove(MissingNumberInDic);
-
-                //InitializePlacesOfNumbers();
-                //initializePlacesOfNumbersFromRowOrCol(col, Calculations.getRowOrCol(col, indexInBoard, sizeOfBoard));
-
-                //foreach (int optionalNumber in optionalNumbersOfPlace)
-                //{
-                //    if (!placesOfNumbers.ContainsKey(optionalNumber))
-                //        continue;
-                //    placesOfNumbers[optionalNumber].Remove(indexInBoard);
-                //    if (placesOfNumbers[optionalNumber].Count == 0)
-                //    {
-                //        // the row/col getRowOrCol(col,indexInBoard,SqrtOfSizeOfBoard) can not contains
-                //        // both of the numbers optionalNumber,MissingNumberInDic because the only place
-                //        // they can be in the row/col is in the same cell indexInBoard
-                //    }
-                //    else
-                //    {
-                //        isNumberHasOnePlaceInRowOrCol(col, optionalNumber, rowOrColInCube);
-                //    }
-                //}
-                //return true;
             }
             else
             {
@@ -248,7 +253,6 @@ namespace SudokuSolver
             }
             return false;
         }
-   
         public void checkNumberOfOptions(List<int> optionsInCubeByBoardIndex, int mostCommonNumber)
         {
             switch (optionsInCubeByBoardIndex.Count)
@@ -264,7 +268,7 @@ namespace SudokuSolver
                 default:
                     // if the options of 'mostCommonNumber' in the same row or col you can
                     //  delete mostCommonNumber's options from the rest of the row or col
-                    checkIfOptionsInTheSameRowOrCol(optionsInCubeByBoardIndex, mostCommonNumber);
+                    checkIfOptionsInTheSameRowOrCol(optionsInCubeByBoardIndex, mostCommonNumber); 
                     break;
             }
         }
@@ -283,7 +287,6 @@ namespace SudokuSolver
                         break;
                 }
         }
-
         private int isOptionsInTheSameRowOrCol(List<int> numberOfOptionsInCube)
         {
             // comparing all the rows and cols to the row and col of the first option
@@ -329,7 +332,6 @@ namespace SudokuSolver
             int indexInCube = Calculations.getIndexInCubeByIndexInBoard(firstIndexInBoard, sizeOfBoard);
             deleteNumberFromRowOrCol(col, optionsInCubeByBoardIndex.ElementAt(0), indexInCube, mostCommonNumber);
         }
-
         public bool checkplacesOfNumbers(bool col, int rowOrColInCube)
         {
             bool theBoardHasChanged = false;
@@ -344,8 +346,7 @@ namespace SudokuSolver
             }
             return theBoardHasChanged;
         }
-
-        public bool repetition(Board.Ptr repetitionContent)
+        public bool repetition(Ptr repetitionContent)
         {
             int numbersOfLopps = -1;
             do
@@ -368,7 +369,7 @@ namespace SudokuSolver
             board[cubeNumber].cubeIntegrity(CountNumberInCube);
             CountNumberInCube.Clear();
         }
-        private void ScanCubesInBoard(bool checkRowsOrCols)
+        private void rowColCubeIntegrity(bool checkRowsOrCols)
         {
             // checkRowsOrCols is true when we want to check integrity of 
             // rows or cols and false when we want to check integrity of cubes.
@@ -389,11 +390,9 @@ namespace SudokuSolver
         }
         private void BoardIntegrity()
         {
-            ScanCubesInBoard(true);
-            ScanCubesInBoard(false);
+            rowColCubeIntegrity(true);
+            rowColCubeIntegrity(false);
         }
-     
-
-
+    
     }
 }
