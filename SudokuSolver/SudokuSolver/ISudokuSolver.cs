@@ -10,6 +10,7 @@ namespace SudokuSolver
     {
         void Solve();
 
+        ISudokuBoard sudokuBoard { get;  }
         List<int> emptyCellsIndexes { get; set; }
 
         int countHowManySolvedCells();

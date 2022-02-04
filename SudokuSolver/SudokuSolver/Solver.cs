@@ -25,13 +25,6 @@ namespace SudokuSolver
             sudokuBoard.step = 3;
             thirdStepOfSolving(sudokuBoard);
         }
-
-        public void copyFrom(Board src, Board des)
-        {
-            for (int indexOfCube = 0; indexOfCube < sudokuBoard.sizeOfBoard; indexOfCube++)
-                for (int indexInCube = 0; indexInCube < sudokuBoard.sizeOfBoard; indexInCube++)
-                        des.board[indexOfCube].getCell(indexInCube).solvedTheCell(src.board[indexOfCube].getCell(indexInCube).number);
-        }
         private void copyEmptyCellsOptions(Board src, Board des)
         {
             foreach(int emptyCellIndexe in emptyCellsIndexes)
@@ -68,7 +61,7 @@ namespace SudokuSolver
                         // a list that contains the indexes in the cube (by the indexes of the board) of where  
                         // the number mostCommonNumber can be
                         List<int> optionsInCubeByBoardIndex = sudokuBoard.board[indexOfCube].fillOptionsInCube(mostCommonNumber, checkTheOptions);
-                        sudokuBoard.checkNumberOfOptions(optionsInCubeByBoardIndex, mostCommonNumber);
+                         sudokuBoard.checkNumberOfOptions(optionsInCubeByBoardIndex, mostCommonNumber);
                     }
                 }
                 sudokuBoard.placesOfNumbers.Remove(mostCommonNumber);
@@ -225,8 +218,20 @@ namespace SudokuSolver
                     {
                         // it is taking to match time to check for trios,quatrets and more... so 
                         // they will get the excption message (if the board is unsolvable) in the backtracking
+                        string numbers = string.Empty;
+                        foreach(int number in groupOptionalPairsNumbers[key])
+                        {
+                            int charNumber = (char)(number + '0');
+                            numbers += charNumber + " ";
+                        }
+                        string indexes = string.Empty;
+                        foreach (int index in sudokuBoard.placesOfNumbers[groupOptionalPairsNumbers[key].ElementAt(0)])
+                        {
+                            int charIndex = (char)index;
+                            indexes += charIndex + " ";
+                        }
 
-                        //excption - the indexes in groupOptionalPairsIndexes.ElementAt(key) cant contain all the numbers in groupOptionalPairsNumbers[key]
+                         throw new UnSolvableCellException("the indexes at " + indexes + "cannot contain all of these numbers: " + numbers);
                     }
                 }
             }
@@ -276,8 +281,9 @@ namespace SudokuSolver
 
         private void thirdStepOfSolving(ISudokuBoard board)
         {
-            ISudokuBoard solvedBoard = backTracking(sudokuBoard);
-            copyFrom((Board)solvedBoard, (Board)sudokuBoard);
+            sudokuBoard = backTracking(sudokuBoard);
+            if (sudokuBoard == null)
+                throw new UnSolvableBordException();
         }
         public ISudokuBoard backTracking(ISudokuBoard board)
         {

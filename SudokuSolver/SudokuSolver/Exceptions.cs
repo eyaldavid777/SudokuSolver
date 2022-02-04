@@ -49,9 +49,14 @@ namespace SudokuSolver
         public NoPlaceForANumberInARowOrColException(string message) : base(message) { }
     }
     [Serializable]
+    class UnSolvableCellException : SudokuExceptions
+    {
+        public UnSolvableCellException(string message) : base(message) { }
+    }
+    [Serializable]
     class UnSolvableBordException :  SudokuExceptions
     {
-        public UnSolvableBordException() : base("Un Solvable Bord") { }
+        public UnSolvableBordException() : base("Unsolvable Bord") { }
     }
 
 }

@@ -12,14 +12,14 @@ namespace SudokuSolver
 
         public ISudokuBoard inBoard { get; }
         public int cubeNumber { get; }
-        public Cube(string cubeNumbers, int numOfCube, ISudokuBoard InBoard)
+        public Cube(string cubeNumbers, int numOfCube, ISudokuBoard InBoard,bool checkCellIntegrity)
         {
             inBoard = InBoard;
             cubeNumber = numOfCube;
             cube = new ICell[inBoard.sizeOfBoard];
-            Initialize(cubeNumbers);
+            Initialize(cubeNumbers, checkCellIntegrity);
         }
-        private void Initialize(string numbersInBoard)
+        private void Initialize(string numbersInBoard, bool checkCellIntegrity)
         {
             for (int indexInCube = 0; indexInCube < cube.Length; indexInCube++)
             {
@@ -30,7 +30,7 @@ namespace SudokuSolver
                     cube[indexInCube] = new Cell(index);
                 }
                 else
-                    cube[indexInCube] = new Cell(inBoard.placesOfNumbers, numbersInBoard[index], index);
+                    cube[indexInCube] = new Cell(inBoard.placesOfNumbers, numbersInBoard[index], index, checkCellIntegrity);
             }
         }
         private int indexInBoard(int indexInCube)
@@ -77,6 +77,14 @@ namespace SudokuSolver
             }
         }
 
+        public ICell getCell(int indexInCube)
+        {
+            return cube[indexInCube];
+        }
+        public List<int> getOptionalNumbers(int indexInCube)
+        {
+            return cube[indexInCube].optionalNumbers;
+        }
         public string rowOrCulIncubeString(bool col, int colOrRowIndex)
         {
             string rowOrCulIncubeString = string.Empty;
@@ -163,9 +171,7 @@ namespace SudokuSolver
             bool foundNakedSingle = false;
             int countOfOptionalNumbers = cube[indexInCube].optionalNumbers.Count;
             if (countOfOptionalNumbers == 0)
-            {
-                // the cell at index indexInBoard(forParams[1]) cant contain a valid number (exception)
-            }
+                throw new UnSolvableCellException("the cell at index " + cube[indexInCube].index + " cannot conatin a valid number");
             if (countOfOptionalNumbers == 1)
             {
                 foundNakedSingle = true;
@@ -285,11 +291,6 @@ namespace SudokuSolver
             }
         }
 
-        public List<int> getOptionalNumbers(int indexInCube)
-        {
-            return cube[indexInCube].optionalNumbers;
-        }
-
         public bool leaveOnlyThePairNumbers(int indexInCube, int firstPairNumbers, int secondPairNumbers)
         {
             if (cube[indexInCube].optionalNumbers.Count == 2)
@@ -320,10 +321,6 @@ namespace SudokuSolver
             {
                 cube[indexInCube].optionalNumbers.Add(option);
             }
-        }
-        public ICell getCell(int indexInCube)
-        {
-            return cube[indexInCube];
         }
     }
 }

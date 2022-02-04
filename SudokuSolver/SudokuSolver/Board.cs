@@ -21,15 +21,15 @@ namespace SudokuSolver
 
         public delegate bool Ptr();
 
-        public Board(string numbersInBoard, int placeToChack = -1)
+        public Board(string numbersInBoard, bool checkBoardIntegrity = true)
         {
             SizeOfBoardIntegrity(numbersInBoard);
             sizeOfBoard = Calculations.Sqrt(numbersInBoard.Length);
             SqrtOfSizeOfBoard = Calculations.Sqrt(sizeOfBoard);
             sudokuSolver = new Solver(this);
             board = new Cube[sizeOfBoard];
-            Initialize(numbersInBoard, 0);
-            if (placeToChack == -1)
+            Initialize(numbersInBoard, 0, checkBoardIntegrity);
+            if (checkBoardIntegrity)
                 BoardIntegrity();
         }
 
@@ -40,20 +40,19 @@ namespace SudokuSolver
             if (!StaticMethods.isInt(Math.Sqrt(doubleSizeOfBoard)))
                 throw new InvalidBoardSizeException();
         }
-        private void Initialize(string numbersInBoard, int index)
+        private void Initialize(string numbersInBoard, int index, bool checkBoardIntegrity)
         {
             step = 1;
             placesOfNumbers = new Dictionary<int, List<int>>();
             knownNumbersNotInBoard = new KnownNumbersNotInBoard();
             InitializePlacesOfNumbers();
-            InitializeBorad(numbersInBoard);
+            InitializeBorad(numbersInBoard, checkBoardIntegrity);
         }
-
-        public void InitializeBorad(string numbersInBoard)
+        public void InitializeBorad(string numbersInBoard, bool checkBoardIntegrity)
         {
             for (int numOfCube = 0; numOfCube < board.Length; numOfCube++)
             {
-                board[numOfCube] = new Cube(numbersInBoard, numOfCube, this);
+                board[numOfCube] = new Cube(numbersInBoard, numOfCube, this , checkBoardIntegrity);
             }
         }
         public void InitializePlacesOfNumbers()
@@ -75,7 +74,6 @@ namespace SudokuSolver
             for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
                 board[forParams[1]].checksOptionsOfARowOrAColInCube(col, rowOrColInBoard % SqrtOfSizeOfBoard);
         }
-
         public Board copyBoardWithNumber(int indexInBoard,char option)
         {          
             string numbersInBoard = boardString();
@@ -84,13 +82,13 @@ namespace SudokuSolver
             temp[indexInBoard] = option; 
             numbersInBoard = temp.ToString();
 
-            Board cloneBoard = new Board(numbersInBoard, indexInBoard);
+            Board cloneBoard = new Board(numbersInBoard,false);
             return cloneBoard;
         }
         public Board copyBoard()
         {
             string numbersInBoard = boardString();
-            Board cloneBoard = new Board(numbersInBoard, 0);
+            Board cloneBoard = new Board(numbersInBoard, false);
             return cloneBoard;
         }
         private string boardString()
@@ -164,15 +162,17 @@ namespace SudokuSolver
         public bool isTheCubeWorthChecking(int cubeNumber, int mostCommonNumber)
         {
             foreach (int indexInBoard in placesOfNumbers[mostCommonNumber])
-                if (Calculations.getCubeNumberByIndex(indexInBoard,sizeOfBoard) / SqrtOfSizeOfBoard == cubeNumber / SqrtOfSizeOfBoard)
+                if (Calculations.getCubeNumberByIndex(indexInBoard, sizeOfBoard) / SqrtOfSizeOfBoard == cubeNumber / SqrtOfSizeOfBoard)
                 {
-                    if (!board[cubeNumber].isRowOrColFull(false, Calculations.getRowOrColInCubeByIndexInBoard(false,indexInBoard,sizeOfBoard)))
+                   if (!board[cubeNumber].isRowOrColFull(false, Calculations.getRowOrColInCubeByIndexInBoard(false,indexInBoard,sizeOfBoard)))
                         return true;
                 }
                 else
+                {
                     if (Calculations.getCubeNumberByIndex(indexInBoard, sizeOfBoard) % SqrtOfSizeOfBoard == cubeNumber % SqrtOfSizeOfBoard)
                         if (!board[cubeNumber].isRowOrColFull(true, Calculations.getRowOrColInCubeByIndexInBoard(true,indexInBoard, sizeOfBoard)))
                             return true;
+                }
             return false;
         }
         private bool isNumberInRowOrColOfCubes(int cubeNumber, bool col, int colOrRowIndexInCube, int[] forParams, int number)
@@ -225,7 +225,7 @@ namespace SudokuSolver
                 placesOfNumbers[mostCommonNumber].Add(indexInBoard);
             }
         }  
-        private bool isNumberHasOnePlaceInRowOrCol(bool col, int MissingNumberInDic, int rowOrColInCube) // hidden single
+        private bool isNumberHasOnePlaceInRowOrCol(bool col, int MissingNumberInDic, int rowOrColInBoard) // hidden single
         {
             // if MissingNumberInDic has only one place in rowOrColInBoard then
             if (placesOfNumbers[MissingNumberInDic].Count == 1)
@@ -247,8 +247,12 @@ namespace SudokuSolver
             {
                 if (placesOfNumbers[MissingNumberInDic].Count == 0)
                 {
-                    // the row or col rowOrColInBoard can not conatins the number MissingNumberInDic
-                    
+                    string rowOrCol = string.Empty;
+                    if (col)
+                        rowOrCol = "col";
+                    else
+                        rowOrCol = "row";
+                    throw new NoPlaceForANumberInARowOrColException("the " + rowOrCol +" at index " + rowOrColInBoard + " cannot conatin the number " + MissingNumberInDic);
                 }
             }
             return false;
@@ -332,13 +336,13 @@ namespace SudokuSolver
             int indexInCube = Calculations.getIndexInCubeByIndexInBoard(firstIndexInBoard, sizeOfBoard);
             deleteNumberFromRowOrCol(col, optionsInCubeByBoardIndex.ElementAt(0), indexInCube, mostCommonNumber);
         }
-        public bool checkplacesOfNumbers(bool col, int rowOrColInCube)
+        public bool checkplacesOfNumbers(bool col, int rowOrColInBoard)
         {
             bool theBoardHasChanged = false;
             for (int indexOfMissingNumberInDic = 0; indexOfMissingNumberInDic < placesOfNumbers.Keys.Count; indexOfMissingNumberInDic++)
             {
                 int MissingNumberInDic = placesOfNumbers.Keys.ElementAt(indexOfMissingNumberInDic);
-                if (isNumberHasOnePlaceInRowOrCol(col, MissingNumberInDic, rowOrColInCube))
+                if (isNumberHasOnePlaceInRowOrCol(col, MissingNumberInDic, rowOrColInBoard))
                 {
                     theBoardHasChanged = true;
                     indexOfMissingNumberInDic = -1;
