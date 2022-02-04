@@ -61,7 +61,7 @@ namespace SudokuSolver
                         // a list that contains the indexes in the cube (by the indexes of the board) of where  
                         // the number mostCommonNumber can be
                         List<int> optionsInCubeByBoardIndex = sudokuBoard.board[indexOfCube].fillOptionsInCube(mostCommonNumber, checkTheOptions);
-                         sudokuBoard.checkNumberOfOptions(optionsInCubeByBoardIndex, mostCommonNumber);
+                         sudokuBoard.hiddenSingleOfCube(optionsInCubeByBoardIndex, mostCommonNumber);
                     }
                 }
                 sudokuBoard.placesOfNumbers.Remove(mostCommonNumber);
@@ -102,9 +102,12 @@ namespace SudokuSolver
         private bool nakedSingle()
         {
             bool theBoardHasChanged = false;
-            for (int indexOfCube = 0; indexOfCube < sudokuBoard.sizeOfBoard; indexOfCube++)
+            for(int emptyCellsIndex =  0; emptyCellsIndex < emptyCellsIndexes.Count; emptyCellsIndex++)
             {
-                if (sudokuBoard.repetition(sudokuBoard.board[indexOfCube].nakedSingleOfACube))
+                int indexInBoard = emptyCellsIndexes[emptyCellsIndex];
+                int indexOfCube = Calculations.getCubeNumberByIndex(indexInBoard, sudokuBoard.sizeOfBoard);
+                int indexInCube = Calculations.getIndexInCubeByIndexInBoard(indexInBoard, sudokuBoard.sizeOfBoard);
+                if (sudokuBoard.board[indexOfCube].checkCountOfOptionsInIndex(indexInCube))
                     theBoardHasChanged = true;
             }
             return theBoardHasChanged;
@@ -164,17 +167,15 @@ namespace SudokuSolver
         private bool hiddenSubsetsOfType(Type type, int typeIndexInBoard)
         {
             int numbersOfLopps = -1;
+            sudokuBoard.InitializePlacesOfNumbers();
+            if (type != Type.cube)
+                sudokuBoard.initializePlacesOfNumbersFromRowOrCol(type == Type.col, typeIndexInBoard);
+            else
+                sudokuBoard.board[typeIndexInBoard].initializePlacesOfNumbersFromCube();
             do
             {
-                numbersOfLopps++;
-                sudokuBoard.InitializePlacesOfNumbers();
-                if (type != Type.cube)
-                    sudokuBoard.initializePlacesOfNumbersFromRowOrCol(type == Type.col, typeIndexInBoard);
-                else
-                {
-                    sudokuBoard.board[typeIndexInBoard].initializePlacesOfNumbersFromCube();                   
-                }
-            } while (findPairsAndDeleteTheirOtherOptions(type) || sudokuBoard.checkplacesOfNumbers(type == Type.col, typeIndexInBoard));
+                numbersOfLopps++;                 
+            } while (findPairsAndDeleteTheirOtherOptions(type) || sudokuBoard.hiddenSingleOfRowAndCol(type, typeIndexInBoard));
             return numbersOfLopps > 0;
         }
 
@@ -184,59 +185,80 @@ namespace SudokuSolver
             bool findAPair = false;
             foreach (int key in groupOptionalPairsNumbers.Keys)
             {
+                // The keys are consecutive numbers from 0 and up 
                 if (groupOptionalPairsNumbers[key].Count == 2)
                 {
-                    int firstPairNumber = groupOptionalPairsNumbers[key].ElementAt(0);
-                    int secondPairNumber = groupOptionalPairsNumbers[key].ElementAt(1);
-
-                    int firstIndexInBoard = sudokuBoard.placesOfNumbers[firstPairNumber].ElementAt(0);
-                    int firstIndexInCube = Calculations.getIndexInCubeByIndexInBoard(firstIndexInBoard, sudokuBoard.sizeOfBoard);
-                    int firstCubeNumber = Calculations.getCubeNumberByIndex(firstIndexInBoard, sudokuBoard.sizeOfBoard);
-                    int secondIndexInBoard = sudokuBoard.placesOfNumbers[firstPairNumber].ElementAt(1);
-                    int secondIndexInCube = Calculations.getIndexInCubeByIndexInBoard(secondIndexInBoard, sudokuBoard.sizeOfBoard);
-                    int secondCubeNumber = Calculations.getCubeNumberByIndex(secondIndexInBoard, sudokuBoard.sizeOfBoard);
-
+                    // there is a chance that two pairs or more will be at
+                    // the same locations so we need to check if the numbers of the 
+                    // pair can still be in two places in the type ( row/col/cube)
+                    if (sudokuBoard.placesOfNumbers[groupOptionalPairsNumbers[key][0]].Count != 2)
+                        invalidGroup(groupOptionalPairsNumbers, key);
+                    List<int> FirstOptionInfo = gettingInfoOnTheOptions(groupOptionalPairsNumbers, key,0);
+                    // FirstOptionInfo = firstPairNumber,firstIndexInBoard,firstIndexInCube,firstCubeNumber
+                    List<int> SecondOptionInfo = gettingInfoOnTheOptions(groupOptionalPairsNumbers, key, 1);
+                    // SecondOptionInfo = secondPairNumber,secondIndexInBoard,secondIndexInCube,secondCubeNumber
                     List<int> remainingOptions = new List<int>();
-                    remainingOptions.Add(firstPairNumber);
-                    remainingOptions.Add(secondPairNumber);
-
-                    if (sudokuBoard.board[firstCubeNumber].leaveInCellOnlyThePairs(firstIndexInCube, remainingOptions) ||
-                    sudokuBoard.board[secondCubeNumber].leaveInCellOnlyThePairs(secondIndexInCube, remainingOptions))
+                    sudokuBoard.print();
+                    remainingOptions.Add(FirstOptionInfo[0]);
+                    remainingOptions.Add(SecondOptionInfo[0]);
+                    // remainingOptions = firstPairNumber,secondPairNumber
+                    //leave in the cells of the pair only the numbers of the pair
+                    if (sudokuBoard.board[FirstOptionInfo[3]].leaveInCellOnlyThePairs(FirstOptionInfo[2], remainingOptions) ||
+                        sudokuBoard.board[SecondOptionInfo[3]].leaveInCellOnlyThePairs(SecondOptionInfo[2], remainingOptions))
                             findAPair = true;
-
-                    if (type != Type.cube && firstCubeNumber == secondCubeNumber)
-                    {
-                        List<int> PlacesNotToDelete = new List<int>();
-                        PlacesNotToDelete.Add(firstIndexInCube);
-                        PlacesNotToDelete.Add(secondIndexInCube);
-                        sudokuBoard.board[firstCubeNumber].deleteNumberFromCube(firstPairNumber, PlacesNotToDelete);
-                    }
+                    isItNecessaryTodeleteNumberFromCube( type, FirstOptionInfo, SecondOptionInfo);
                 }
                 else
                 {
+                    // if there is more then two numbers that rlated to the group it is
+                    //  a proplem because there is not enough places for all the numbers
                     if (groupOptionalPairsNumbers[key].Count > 2)
-                    {
-                        // it is taking to match time to check for trios,quatrets and more... so 
-                        // they will get the excption message (if the board is unsolvable) in the backtracking
-                        string numbers = string.Empty;
-                        foreach(int number in groupOptionalPairsNumbers[key])
-                        {
-                            int charNumber = (char)(number + '0');
-                            numbers += charNumber + " ";
-                        }
-                        string indexes = string.Empty;
-                        foreach (int index in sudokuBoard.placesOfNumbers[groupOptionalPairsNumbers[key].ElementAt(0)])
-                        {
-                            int charIndex = (char)index;
-                            indexes += charIndex + " ";
-                        }
-
-                         throw new UnSolvableCellException("the indexes at " + indexes + "cannot contain all of these numbers: " + numbers);
-                    }
+                        invalidGroup(groupOptionalPairsNumbers, key);
                 }
             }
             return findAPair;
+        }
 
+        private void isItNecessaryTodeleteNumberFromCube(Type type, List<int> FirstOptionInfo, List<int> SecondOptionInfo)
+        {
+            // if the pair is in the same row or col and in the same cube and we didn't check
+            // for pairs in cube (type != Type.cube) so delete all the options of the pair's  
+            // numbers from any other place in the cube except from the places of the pair
+            if (type != Type.cube && FirstOptionInfo[3] == SecondOptionInfo[3])
+            {
+                List<int> PlacesNotToDelete = new List<int>();
+                PlacesNotToDelete.Add(FirstOptionInfo[2]);
+                PlacesNotToDelete.Add(SecondOptionInfo[2]);
+                //PlacesNotToDelete = firstIndexInCube,secondIndexInCube
+                sudokuBoard.board[FirstOptionInfo[3]].deleteNumberFromCube(FirstOptionInfo[0], PlacesNotToDelete);
+            }
+        }
+        private List<int> gettingInfoOnTheOptions(Dictionary<int, List<int>> groupOptionalPairsNumbers, int key,int numOfOption)
+        {
+            List<int> infoOnOption = new List<int>();
+            infoOnOption.Add(groupOptionalPairsNumbers[key].ElementAt(numOfOption));
+            infoOnOption.Add(sudokuBoard.placesOfNumbers[infoOnOption[0]].ElementAt(numOfOption));
+            infoOnOption.Add(Calculations.getIndexInCubeByIndexInBoard(infoOnOption[1], sudokuBoard.sizeOfBoard));
+            infoOnOption.Add(Calculations.getCubeNumberByIndex(infoOnOption[1], sudokuBoard.sizeOfBoard));
+            return infoOnOption;
+        }
+        private void invalidGroup(Dictionary<int, List<int>> groupOptionalPairsNumbers, int key)
+        {
+                // it is taking to match time to check for trios,quatrets and more... so 
+                // they will get the excption message (if the board is unsolvable) in the backtracking
+                string numbers = string.Empty;
+                foreach (int number in groupOptionalPairsNumbers[key])
+                {
+                    char charNumber = (char)(number + '0');
+                    numbers += charNumber + " ";
+                }
+                string indexes = string.Empty;
+                foreach (int index in sudokuBoard.placesOfNumbers[groupOptionalPairsNumbers[key].ElementAt(0)])
+                {
+                    int charIndex = (char)index;
+                    indexes += charIndex + " ";
+                }
+                throw new UnSolvableCellException("the indexes at " + indexes + "cannot contain all of these numbers: " + numbers);
         }
 
         private Dictionary<int, List<int>> findSubsets()
@@ -256,6 +278,7 @@ namespace SudokuSolver
                 }
                 else
                 {
+                    // The keys of groupOptionalPairsNumbers are consecutive numbers from 0 and up 
                     groupOptionalPairsNumbers.Add(groupOptionalPairsIndexes.Count, new List<int>());
                     groupOptionalPairsNumbers[groupOptionalPairsIndexes.Count].Add(sudokuBoard.placesOfNumbers.Keys.ElementAt(indexOfMissingNumber));
                     groupOptionalPairsIndexes.Add(sudokuBoard.placesOfNumbers.Values.ElementAt(indexOfMissingNumber));
@@ -277,8 +300,6 @@ namespace SudokuSolver
         {
             return (firstIndexsesList.ElementAt(0) == secondIndexsesList.ElementAt(0)) && (firstIndexsesList.ElementAt(1) == secondIndexsesList.ElementAt(1));
         }
-
-
         private void thirdStepOfSolving(ISudokuBoard board)
         {
             sudokuBoard = backTracking(sudokuBoard);

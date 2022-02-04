@@ -26,7 +26,7 @@ namespace SudokuSolver
 
         void print();
 
-        void checkNumberOfOptions(List<int> optionsInCubeByBoardIndex, int mostCommonNumber);
+        void hiddenSingleOfCube(List<int> optionsInCubeByBoardIndex, int mostCommonNumber);
 
         bool repetition(Board.Ptr repetitionContent);
         bool isPossibleIndexToNumber(int indexOfNumberInBoard, int indexOfNumberInCube, int number);
@@ -35,7 +35,7 @@ namespace SudokuSolver
 
         void initializePlacesOfNumbersFromRowOrCol(bool col, int rowOrColInBoard);
 
-        bool checkplacesOfNumbers(bool col, int rowOrColInCube);
+        bool hiddenSingleOfRowAndCol(Type type, int rowOrColInBoard);
 
 
         bool isTheCubeWorthChecking(int cubeNumber, int mostCommonNumber);

@@ -25,7 +25,7 @@ namespace SudokuSolver
 
         void deleteNumberFromRowOrColInCube(bool col, int colOrRowIndexInCube, int number);
 
-        void rowOrColIntegrity(bool col, int RowOrColInCube, int RowOrColOfCube, List<int> CountNumberInRowAndCol);
+        void rowOrColIntegrity(Type type, int RowOrColInCube, int RowOrColOfCube, List<int> CountNumberInRowAndCol);
 
         void cubeIntegrity(List<int> CountNumberInRowAndCol);
 
@@ -35,9 +35,9 @@ namespace SudokuSolver
 
         void deleteNumberFromCube(int number, List<int> PlacesNotToDelete);
 
-        List<int> getOptionalNumbers(int indexInCube); 
+        List<int> getOptionalNumbers(int indexInCube);
 
-        bool nakedSingleOfACube();
+        bool checkCountOfOptionsInIndex(int indexInCube);
 
         void initializePlacesOfNumbersFromCube();
 

@@ -38,15 +38,9 @@ namespace SudokuSolver
     }
 
     [Serializable]
-    class NoPlaceForANumberInACubeException :  SudokuExceptions
+    class NoPlaceForANumberInARowOrColOrCubeException :  SudokuExceptions
     {
-        public NoPlaceForANumberInACubeException(string message) : base(message) { }
-    }
-
-    [Serializable]
-    class NoPlaceForANumberInARowOrColException :  SudokuExceptions
-    {
-        public NoPlaceForANumberInARowOrColException(string message) : base(message) { }
+        public NoPlaceForANumberInARowOrColOrCubeException(string message) : base(message) { }
     }
     [Serializable]
     class UnSolvableCellException : SudokuExceptions

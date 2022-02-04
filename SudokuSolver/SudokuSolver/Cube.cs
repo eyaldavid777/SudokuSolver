@@ -151,7 +151,7 @@ namespace SudokuSolver
                 else
                     if (cube[indexInCube].number == number)
                         return;
-            inBoard.checkNumberOfOptions(countNumberInCube, number);
+            inBoard.hiddenSingleOfCube(countNumberInCube, number);
         }
 
         public void deleteNumberFromRowOrColInCube(bool col, int colOrRowIndexInCube, int number)
@@ -166,12 +166,15 @@ namespace SudokuSolver
                 isNumberHasOnePlaceInCube(number);
         }
 
-        private bool checkCountOfOptionsInIndex(int indexInCube)
+        public bool checkCountOfOptionsInIndex(int indexInCube)
         {
             bool foundNakedSingle = false;
             int countOfOptionalNumbers = cube[indexInCube].optionalNumbers.Count;
             if (countOfOptionalNumbers == 0)
-                throw new UnSolvableCellException("the cell at index " + cube[indexInCube].index + " cannot conatin a valid number");
+            {
+                int cubeNumber = Calculations.getCubeNumberByIndex(cube[indexInCube].index, inBoard.sizeOfBoard);
+                throw new UnSolvableCellException("the cell in the cube " + cubeNumber + " at index " + indexInCube + " (in the cube) cannot conatin a valid number");
+            }
             if (countOfOptionalNumbers == 1)
             {
                 foundNakedSingle = true;
@@ -181,18 +184,6 @@ namespace SudokuSolver
                 deleteNumberFromCube(knownNumber,new List<int>());
             }
             return foundNakedSingle;
-        }
-
-        public bool nakedSingleOfACube()
-        {
-            bool theBoardHasChanged = false;
-            for (int indexInCube = 0; indexInCube < inBoard.sizeOfBoard; indexInCube++)
-            {
-                if(!cube[indexInCube].isSolved())
-                    if (checkCountOfOptionsInIndex(indexInCube))
-                        theBoardHasChanged = true;
-            }
-            return theBoardHasChanged;
         }
 
         public void deleteNumberFromCube(int number, List<int> PlacesNotToDelete)
@@ -222,22 +213,17 @@ namespace SudokuSolver
             inBoard.sudokuSolver.emptyCellsIndexes.Remove(cube[indexInCube].index);
         }
 
-        public void rowOrColIntegrity(bool col, int rowOrColInCube, int rowOrColOfCube, List<int> CountNumberInRowAndCol)
+        public void rowOrColIntegrity(Type type, int rowOrColInCube, int rowOrColOfCube, List<int> CountNumberInRowAndCol)
         {
-            int[] forParams = StaticMethods.forParameters(rowOrColInCube, col, inBoard.SqrtOfSizeOfBoard);
+            int[] forParams = StaticMethods.forParameters(rowOrColInCube, type == Type.col, inBoard.SqrtOfSizeOfBoard);
             for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
                 if (cube[forParams[1]].isSolved())
                 {
                     int numberInCell = cube[forParams[1]].number;
                     if (CountNumberInRowAndCol.Contains(numberInCell))
                     {
-                        string rowOrCol;
                         int rowOrColInBoard = rowOrColOfCube * inBoard.SqrtOfSizeOfBoard + rowOrColInCube;
-                        if (col)
-                            rowOrCol = "col";
-                        else
-                            rowOrCol = "row";
-                        throw new SameNumberInARowOrColException("The number " + numberInCell + " appears more than once in the " + rowOrCol + " " + rowOrColInBoard);
+                        throw new SameNumberInARowOrColException("The number " + numberInCell + " appears more than once in the " + type + " " + rowOrColInBoard);
                     }
                     CountNumberInRowAndCol.Add(numberInCell);
                 }
@@ -250,7 +236,9 @@ namespace SudokuSolver
                 {
                     int numberInCell = cube[indexInCube].number;
                     if (CountNumberInRowAndCol.Contains(numberInCell))
+                    {
                         throw new SameNumberInACubeException("The number " + numberInCell + " appears more than once in the cube " + cubeNumber);
+                    }
                     CountNumberInRowAndCol.Add(numberInCell);
                 }
         }
@@ -268,11 +256,11 @@ namespace SudokuSolver
 
         private void copyOptionsInIndex(int indexInCube)
         {
-            int countOfOptionalNumbers = cube[indexInCube].optionalNumbers.Count;
             // copy all the optional numbers to the dictionary inBoard.placesOfNumbers
             // the key is an optional number and the value is the indexes list of where the optional number is located
-            for (int indexOfAnOption = 0; indexOfAnOption < countOfOptionalNumbers; indexOfAnOption++)
-                inBoard.placesOfNumbers[cube[indexInCube].optionalNumbers.ElementAt(indexOfAnOption)].Add(cube[indexInCube].index);
+            int indexInBoard = cube[indexInCube].index;
+            foreach (int option in cube[indexInCube].optionalNumbers)
+                inBoard.placesOfNumbers[option].Add(indexInBoard);
         }
 
         public void checksOptionsOfARowOrAColInCube(bool col, int rowOrColInCube)
@@ -291,15 +279,7 @@ namespace SudokuSolver
             }
         }
 
-        public bool leaveOnlyThePairNumbers(int indexInCube, int firstPairNumbers, int secondPairNumbers)
-        {
-            if (cube[indexInCube].optionalNumbers.Count == 2)
-                return false;
-            cube[indexInCube].optionalNumbers.Clear();
-            cube[indexInCube].optionalNumbers.Add(firstPairNumbers);
-            cube[indexInCube].optionalNumbers.Add(secondPairNumbers);
-            return true;
-        }
+
 
         public bool leaveInCellOnlyThePairs(int indexInCube,List<int> remainingOptions)
         {           
@@ -311,7 +291,19 @@ namespace SudokuSolver
             cube[indexInCube].optionalNumbers.Clear();
             cube[indexInCube].optionalNumbers.Add(remainingOptions.ElementAt(0));
             cube[indexInCube].optionalNumbers.Add(remainingOptions.ElementAt(1));
+            deleteOptionsFromPlacesOfNumbers(cube[indexInCube].index, remainingOptions);
             return true;
+        }
+
+        private void deleteOptionsFromPlacesOfNumbers(int indexInBoard,List<int> remainingOptions)
+        {
+            foreach(int number in inBoard.placesOfNumbers.Keys)
+            {
+                if (!remainingOptions.Contains(number))
+                {
+                    inBoard.placesOfNumbers[number].Remove(indexInBoard);
+                }
+            }
         }
 
         public void leaveInCellOnlyTheListOptions(int indexInCube, List<int> remainingOptions)

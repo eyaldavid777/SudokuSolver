@@ -10,16 +10,16 @@ namespace SudokuSolver
     { 
         public static int getCubeNumberByIndex(int index,int sizeOfBoard)
         {
-            int SqrtOfSizeOfBoard = Sqrt(sizeOfBoard);
+            int SqrtOfSizeOfBoard = sqrt(sizeOfBoard);
             return index / sizeOfBoard / SqrtOfSizeOfBoard * SqrtOfSizeOfBoard + index % sizeOfBoard / SqrtOfSizeOfBoard;
         }
         public static int getRowOrColInCubeByIndexInBoard(bool col, int index, int sizeOfBoard)
         {
-            return getRowOrCol(col, index, sizeOfBoard) % Sqrt(sizeOfBoard);
+            return getRowOrCol(col, index, sizeOfBoard) % sqrt(sizeOfBoard);
         }
         public static int getIndexInCubeByIndexInBoard(int indexInBoard, int sizeOfBoard)
         {
-            return getRowOrColInCubeByIndexInBoard(false, indexInBoard, sizeOfBoard) * Sqrt(sizeOfBoard) + getRowOrColInCubeByIndexInBoard(true, indexInBoard, sizeOfBoard);              
+            return getRowOrColInCubeByIndexInBoard(false, indexInBoard, sizeOfBoard) * sqrt(sizeOfBoard) + getRowOrColInCubeByIndexInBoard(true, indexInBoard, sizeOfBoard);              
         }
 
         public static int getRowOrCol(bool col, int number1, int number2)
@@ -28,10 +28,14 @@ namespace SudokuSolver
                 return number1 % number2;
             return number1 / number2;
         }
-        public static int Sqrt(int number)
+        public static int sqrt(int number)
         {
             return (int)Math.Sqrt(number);
         }
 
+        public static int squared(int number)
+        {
+            return (int)Math.Pow(number,2);
+        }
     }
 }

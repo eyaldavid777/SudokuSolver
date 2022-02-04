@@ -24,8 +24,8 @@ namespace SudokuSolver
         public Board(string numbersInBoard, bool checkBoardIntegrity = true)
         {
             SizeOfBoardIntegrity(numbersInBoard);
-            sizeOfBoard = Calculations.Sqrt(numbersInBoard.Length);
-            SqrtOfSizeOfBoard = Calculations.Sqrt(sizeOfBoard);
+            sizeOfBoard = Calculations.sqrt(numbersInBoard.Length);
+            SqrtOfSizeOfBoard = Calculations.sqrt(sizeOfBoard);
             sudokuSolver = new Solver(this);
             board = new Cube[sizeOfBoard];
             Initialize(numbersInBoard, 0, checkBoardIntegrity);
@@ -103,6 +103,45 @@ namespace SudokuSolver
                 }
             }
             return boardString;
+        }
+        private void BoardIntegrity()
+        {
+            rowColCubeIntegrity(true);
+            rowColCubeIntegrity(false);
+        }
+
+        private void rowColCubeIntegrity(bool checkRowsOrCols)
+        {
+            // checkRowsOrCols is true when we want to check integrity of 
+            // rows or cols and false when we want to check integrity of cubes.
+            List<int> CountNumberInRowAndColOrCube = new List<int>();
+            for (int RowOrColOfCube = 0; RowOrColOfCube < SqrtOfSizeOfBoard; RowOrColOfCube++)
+            {
+                for (int RowOrColInCube = 0; RowOrColInCube < SqrtOfSizeOfBoard; RowOrColInCube++)
+                {
+                    if (checkRowsOrCols)
+                    {
+                        BoardIntegrityOfRowOrCol(Type.col, CountNumberInRowAndColOrCube, RowOrColOfCube, RowOrColInCube);
+                        BoardIntegrityOfRowOrCol(Type.row, CountNumberInRowAndColOrCube, RowOrColOfCube, RowOrColInCube);
+                    }
+                    else
+                        BoardIntegrityOfCube(CountNumberInRowAndColOrCube, RowOrColOfCube * SqrtOfSizeOfBoard + RowOrColInCube);
+                }
+            }
+        }
+        private void BoardIntegrityOfRowOrCol(Type type , List<int> CountNumberInRowAndCol, int RowOrColOfCube, int RowOrColInCube)
+        {
+            int[] forParams = StaticMethods.forParameters(RowOrColOfCube, type == Type.col, SqrtOfSizeOfBoard);
+            for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
+            {
+                board[forParams[1]].rowOrColIntegrity(type, RowOrColInCube, RowOrColOfCube, CountNumberInRowAndCol);
+            }
+            CountNumberInRowAndCol.Clear();
+        }
+        private void BoardIntegrityOfCube(List<int> CountNumberInCube, int cubeNumber)
+        {
+            board[cubeNumber].cubeIntegrity(CountNumberInCube);
+            CountNumberInCube.Clear();
         }
         private void printALine()
         {
@@ -225,7 +264,7 @@ namespace SudokuSolver
                 placesOfNumbers[mostCommonNumber].Add(indexInBoard);
             }
         }  
-        private bool isNumberHasOnePlaceInRowOrCol(bool col, int MissingNumberInDic, int rowOrColInBoard) // hidden single
+        private bool isNumberHasOnePlaceInRowOrCol(Type type, int MissingNumberInDic, int rowOrColInBoard) // hidden single
         {
             // if MissingNumberInDic has only one place in rowOrColInBoard then
             if (placesOfNumbers[MissingNumberInDic].Count == 1)
@@ -246,39 +285,28 @@ namespace SudokuSolver
             else
             {
                 if (placesOfNumbers[MissingNumberInDic].Count == 0)
-                {
-                    string rowOrCol = string.Empty;
-                    if (col)
-                        rowOrCol = "col";
-                    else
-                        rowOrCol = "row";
-                    throw new NoPlaceForANumberInARowOrColException("the " + rowOrCol +" at index " + rowOrColInBoard + " cannot conatin the number " + MissingNumberInDic);
-                }
+                    throw new NoPlaceForANumberInARowOrColOrCubeException("the " + type + " at index " + rowOrColInBoard + " cannot conatin the number " + MissingNumberInDic);
             }
             return false;
         }
-        public void checkNumberOfOptions(List<int> optionsInCubeByBoardIndex, int mostCommonNumber)
+        public void hiddenSingleOfCube(List<int> optionsInCubeByBoardIndex, int mostCommonNumber)
         {
-            switch (optionsInCubeByBoardIndex.Count)
+            if (optionsInCubeByBoardIndex.Count == 1)
             {
-                case 0:
-                    // in the cube indexOfCube you can't put the number mostCommonNumber (exception)
-                    break;
-                case 1:
                     // put the number in it's only place and delete the options of the number
                     // in the cells with the same row and col
                     putKnownNumberAndDeletOptions(optionsInCubeByBoardIndex.ElementAt(0), mostCommonNumber, true, true);
-                    break;
-                default:
-                    // if the options of 'mostCommonNumber' in the same row or col you can
-                    //  delete mostCommonNumber's options from the rest of the row or col
-                    checkIfOptionsInTheSameRowOrCol(optionsInCubeByBoardIndex, mostCommonNumber); 
-                    break;
+            }
+            else
+            {
+                // if the options of 'mostCommonNumber' in the same row or col you can
+                //  delete mostCommonNumber's options from the rest of the row or col
+                checkIfOptionsInTheSameRowOrCol(optionsInCubeByBoardIndex, mostCommonNumber);
             }
         }
         private void checkIfOptionsInTheSameRowOrCol(List<int> optionsInCubeByBoardIndex, int mostCommonNumber)
         {
-            if (optionsInCubeByBoardIndex.Count <= SqrtOfSizeOfBoard)
+            if (optionsInCubeByBoardIndex.Count <= SqrtOfSizeOfBoard && optionsInCubeByBoardIndex.Count > 0)
                 switch (isOptionsInTheSameRowOrCol(optionsInCubeByBoardIndex))
                 {
                     case -1: // the options dont have the same row or col
@@ -336,13 +364,13 @@ namespace SudokuSolver
             int indexInCube = Calculations.getIndexInCubeByIndexInBoard(firstIndexInBoard, sizeOfBoard);
             deleteNumberFromRowOrCol(col, optionsInCubeByBoardIndex.ElementAt(0), indexInCube, mostCommonNumber);
         }
-        public bool checkplacesOfNumbers(bool col, int rowOrColInBoard)
+        public bool hiddenSingleOfRowAndCol(Type type, int rowOrColInBoard)
         {
             bool theBoardHasChanged = false;
             for (int indexOfMissingNumberInDic = 0; indexOfMissingNumberInDic < placesOfNumbers.Keys.Count; indexOfMissingNumberInDic++)
             {
                 int MissingNumberInDic = placesOfNumbers.Keys.ElementAt(indexOfMissingNumberInDic);
-                if (isNumberHasOnePlaceInRowOrCol(col, MissingNumberInDic, rowOrColInBoard))
+                if (isNumberHasOnePlaceInRowOrCol(type, MissingNumberInDic, rowOrColInBoard))
                 {
                     theBoardHasChanged = true;
                     indexOfMissingNumberInDic = -1;
@@ -359,44 +387,5 @@ namespace SudokuSolver
             } while (repetitionContent());
             return numbersOfLopps > 0;
         }     
-        private void BoardIntegrityOfRowOrCol(bool col, List<int> CountNumberInRowAndCol, int RowOrColOfCube, int RowOrColInCube)
-        {
-            int[] forParams = StaticMethods.forParameters(RowOrColOfCube, col, SqrtOfSizeOfBoard);
-            for (; forParams[1] < forParams[2]; forParams[1] += forParams[0])
-            {
-                board[forParams[1]].rowOrColIntegrity(col, RowOrColInCube, RowOrColOfCube, CountNumberInRowAndCol);
-            }
-            CountNumberInRowAndCol.Clear();
-        }
-        private void BoardIntegrityOfCube(List<int> CountNumberInCube, int cubeNumber)
-        {
-            board[cubeNumber].cubeIntegrity(CountNumberInCube);
-            CountNumberInCube.Clear();
-        }
-        private void rowColCubeIntegrity(bool checkRowsOrCols)
-        {
-            // checkRowsOrCols is true when we want to check integrity of 
-            // rows or cols and false when we want to check integrity of cubes.
-            List<int> CountNumberInRowAndColOrCube = new List<int>();
-            for (int RowOrColOfCube = 0; RowOrColOfCube < SqrtOfSizeOfBoard; RowOrColOfCube++)
-            {
-                for (int RowOrColInCube = 0; RowOrColInCube < SqrtOfSizeOfBoard; RowOrColInCube++)
-                {
-                    if (checkRowsOrCols)
-                    {
-                        BoardIntegrityOfRowOrCol(true, CountNumberInRowAndColOrCube, RowOrColOfCube, RowOrColInCube);
-                        BoardIntegrityOfRowOrCol(false, CountNumberInRowAndColOrCube, RowOrColOfCube, RowOrColInCube);
-                    }
-                    else
-                        BoardIntegrityOfCube(CountNumberInRowAndColOrCube, RowOrColOfCube * SqrtOfSizeOfBoard + RowOrColInCube);
-                }
-            }
-        }
-        private void BoardIntegrity()
-        {
-            rowColCubeIntegrity(true);
-            rowColCubeIntegrity(false);
-        }
-    
     }
 }
