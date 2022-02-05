@@ -1,0 +1,17 @@
+D:\C#\SudokuSolver\Tests\obj\Debug\Tests.csproj.AssemblyReference.cache
+D:\C#\SudokuSolver\Tests\obj\Debug\Tests.csproj.CoreCompileInputs.cache
+D:\C#\SudokuSolver\Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll
+D:\C#\SudokuSolver\Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll
+D:\C#\SudokuSolver\Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll
+D:\C#\SudokuSolver\Tests\bin\Debug\Tests.dll
+D:\C#\SudokuSolver\Tests\bin\Debug\Tests.pdb
+D:\C#\SudokuSolver\Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.dll
+D:\C#\SudokuSolver\Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll
+D:\C#\SudokuSolver\Tests\bin\Debug\SudokuSolver.exe
+D:\C#\SudokuSolver\Tests\bin\Debug\SudokuSolver.pdb
+D:\C#\SudokuSolver\Tests\bin\Debug\SudokuSolver.exe.config
+D:\C#\SudokuSolver\Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.xml
+D:\C#\SudokuSolver\Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.xml
+D:\C#\SudokuSolver\Tests\obj\Debug\Tests.csproj.CopyComplete
+D:\C#\SudokuSolver\Tests\obj\Debug\Tests.dll
+D:\C#\SudokuSolver\Tests\obj\Debug\Tests.pdb
